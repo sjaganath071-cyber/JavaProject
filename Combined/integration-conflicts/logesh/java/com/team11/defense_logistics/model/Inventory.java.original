@@ -1,0 +1,103 @@
+package com.team11.defense_logistics.model;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
+public class Inventory {
+
+    private Long id;
+
+    @NotBlank(message = "Item code is required")
+    private String itemCode;
+
+    @NotBlank(message = "Item name is required")
+    private String itemName;
+
+    @NotBlank(message = "Category is required")
+    private String category;
+
+    @Min(value = 0, message = "Quantity cannot be negative")
+    private int quantity;
+
+    @NotBlank(message = "Unit is required")
+    private String unit;
+
+    private String status;
+
+    public Inventory() {
+    }
+
+    public Inventory(Long id, String itemName, String category,
+                     int quantity, String unit, String status) {
+        this(id, id == null ? null : "INV-%03d".formatted(id), itemName,
+            category, quantity, unit, status);
+        }
+
+        public Inventory(Long id, String itemCode, String itemName,
+                 String category, int quantity, String unit,
+                 String status) {
+        this.id = id;
+        this.itemCode = itemCode;
+        this.itemName = itemName;
+        this.category = category;
+        this.quantity = quantity;
+        this.unit = unit;
+        this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getItemCode() {
+        return itemCode;
+    }
+
+    public void setItemCode(String itemCode) {
+        this.itemCode = itemCode;
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+}

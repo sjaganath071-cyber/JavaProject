@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Requests | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/logistics-requests.css}">
+</head>
+<body>
+<div class="lr-page">
+
+    <header class="lr-page-header">
+        <div>
+            <div class="lr-breadcrumb">Operations / Resource Management</div>
+            <h1>Logistics Requests</h1>
+            <p>Submit, track, and manage requests across operational units.</p>
+            <a class="lr-button lr-button-secondary dashboard-back-link"
+               th:href="@{/dashboard}">← Back to Dashboard</a>
+        </div>
+
+        <a class="lr-button lr-button-primary"
+           th:href="@{/logistics-requests/new}">
+            + New Request
+        </a>
+    </header>
+
+    <div th:if="${successMessage}" class="lr-alert lr-alert-success"
+         th:text="${successMessage}"></div>
+
+    <div th:if="${errorMessage}" class="lr-alert lr-alert-error"
+         th:text="${errorMessage}"></div>
+
+    <section class="lr-stats" th:if="${dataAvailable}">
+        <article class="lr-stat-card">
+            <span class="lr-stat-label">Total Requests</span>
+            <strong th:text="${totalCount}">0</strong>
+            <span class="lr-stat-caption">All recorded requests</span>
+        </article>
+
+        <article class="lr-stat-card">
+            <span class="lr-stat-label">Pending</span>
+            <strong th:text="${pendingCount}">0</strong>
+            <span class="lr-stat-caption">Awaiting review</span>
+        </article>
+
+        <article class="lr-stat-card">
+            <span class="lr-stat-label">Approved</span>
+            <strong th:text="${approvedCount}">0</strong>
+            <span class="lr-stat-caption">Approved for fulfillment</span>
+        </article>
+
+        <article class="lr-stat-card">
+            <span class="lr-stat-label">Allocated</span>
+            <strong th:text="${allocatedCount}">0</strong>
+            <span class="lr-stat-caption">Resources assigned</span>
+        </article>
+
+        <article class="lr-stat-card lr-stat-critical">
+            <span class="lr-stat-label">Critical Priority</span>
+            <strong th:text="${criticalCount}">0</strong>
+            <span class="lr-stat-caption">Unresolved critical requests</span>
+        </article>
+    </section>
+
+    <section class="lr-panel">
+        <div class="lr-panel-heading">
+            <div>
+                <h2>Request Register</h2>
+                <p>Search and filter logistics requests.</p>
+            </div>
+        </div>
+
+        <form class="lr-filter-form" method="get"
+              th:action="@{/logistics-requests}">
+
+            <div class="lr-filter-search">
+                <label for="keyword">Search</label>
+                <input id="keyword" type="text" name="keyword"
+                       placeholder="Request code, unit, description..."
+                       th:value="${keyword}">
+            </div>
+
+            <div>
+                <label for="priority">Priority</label>
+                <select id="priority" name="priority">
+                    <option value="">All priorities</option>
+                    <option value="LOW" th:selected="${selectedPriority == 'LOW'}">Low</option>
+                    <option value="MEDIUM" th:selected="${selectedPriority == 'MEDIUM'}">Medium</option>
+                    <option value="HIGH" th:selected="${selectedPriority == 'HIGH'}">High</option>
+                    <option value="CRITICAL" th:selected="${selectedPriority == 'CRITICAL'}">Critical</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">Pending</option>
+                    <option value="APPROVED" th:selected="${selectedStatus == 'APPROVED'}">Approved</option>
+                    <option value="ALLOCATED" th:selected="${selectedStatus == 'ALLOCATED'}">Allocated</option>
+                    <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">Completed</option>
+                    <option value="REJECTED" th:selected="${selectedStatus == 'REJECTED'}">Rejected</option>
+                </select>
+            </div>
+
+            <button class="lr-button lr-button-primary" type="submit">Apply Filters</button>
+            <a class="lr-button lr-button-secondary"
+               th:href="@{/logistics-requests}">Reset</a>
+        </form>
+
+        <div class="lr-table-wrap">
+            <table class="lr-table">
+                <thead>
+                <tr>
+                    <th>Request Code</th>
+                    <th>Requesting Unit</th>
+                    <th>Request Type</th>
+                    <th>Priority</th>
+                    <th>Requested Date</th>
+                    <th>Required By</th>
+                    <th>Status</th>
+                    <th>Assigned Resource</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="request : ${requests}">
+                    <td>
+                        <a class="lr-code-link"
+                           th:href="@{/logistics-requests/{id}(id=${request.id})}"
+                           th:text="${request.requestCode}">REQ-001</a>
+                    </td>
+
+                    <td th:text="${request.requestingUnit}">Operations Unit</td>
+                    <td th:text="${request.requestType}">EQUIPMENT</td>
+
+                    <td>
+                        <span class="lr-badge"
+                              th:classappend="${' lr-priority-' + #strings.toLowerCase(request.priority)}"
+                              th:text="${request.priority}">MEDIUM</span>
+                    </td>
+
+                    <td th:text="${request.requestedDate != null ? #temporals.format(request.requestedDate, 'dd MMM yyyy') : '—'}">10 Oct 2026</td>
+
+                    <td th:text="${request.requiredByDate != null ? #temporals.format(request.requiredByDate, 'dd MMM yyyy') : '—'}">15 Oct 2026</td>
+
+                    <td>
+                        <span class="lr-badge"
+                              th:classappend="${' lr-status-' + #strings.toLowerCase(request.status)}"
+                              th:text="${request.status}">PENDING</span>
+                    </td>
+
+                    <td th:text="${request.assignedResource != null and !#strings.isEmpty(request.assignedResource) ? request.assignedResource : 'Not assigned'}">
+                        Not assigned
+                    </td>
+
+                    <td class="lr-actions">
+                        <a th:href="@{/logistics-requests/{id}(id=${request.id})}">View</a>
+                        <a th:href="@{/logistics-requests/{id}/edit(id=${request.id})}">Edit</a>
+                    </td>
+                </tr>
+
+                <tr th:if="${dataAvailable and #lists.isEmpty(requests)}">
+                    <td colspan="9" class="lr-empty">
+                        <strong>No logistics requests found</strong>
+                        <p>Try changing your filters or create a new request.</p>
+                        <a class="lr-button lr-button-primary"
+                           th:href="@{/logistics-requests/new}">Create Request</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.ResourceAllocation;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Service
+public class ResourceAllocationService {
+    private final Map<Long, ResourceAllocation> records = new LinkedHashMap<>();
+    private final AtomicLong sequence = new AtomicLong(1);
+
+    public List<ResourceAllocation> findAll() {
+        return new ArrayList<>(records.values());
+    }
+
+    public Optional<ResourceAllocation> findById(Long id) {
+        return Optional.ofNullable(records.get(id));
+    }
+
+    public List<ResourceAllocation> byRequest(Long id) {
+        return records.values().stream()
+            .filter(a -> Objects.equals(a.getRequestId(), id)).toList();
+    }
+
+    public List<ResourceAllocation> byVehicle(Long id) {
+        return records.values().stream()
+            .filter(a -> Objects.equals(a.getVehicleId(), id)).toList();
+    }
+
+    public List<ResourceAllocation> byStatus(String status) {
+        return records.values().stream()
+            .filter(a -> Objects.equals(a.getStatus(), status)).toList();
+    }
+
+    public ResourceAllocation create(ResourceAllocation a) {
+        if (a == null || a.getRequestId() == null || a.getRequestId() <= 0 ||
+            a.getVehicleId() == null || a.getVehicleId() <= 0)
+            throw new IllegalArgumentException("Positive requestId and vehicleId required");
+        if (a.getResourceName() == null || a.getResourceName().isBlank())
+            throw new IllegalArgumentException("Resource name required");
+        if (a.getAllocatedTo() == null || a.getAllocatedTo().isBlank())
+            throw new IllegalArgumentException("Allocated-to value required");
+
+        boolean active = records.values().stream()
+            .anyMatch(x -> Objects.equals(x.getVehicleId(), a.getVehicleId())
+                && "Allocated".equals(x.getStatus()));
+        if (active) throw new IllegalArgumentException("Vehicle already allocated");
+
+        a.setId(sequence.getAndIncrement());
+        a.setStatus("Allocated");
+        a.setAllocationDate(LocalDateTime.now());
+        records.put(a.getId(), a);
+        return a;
+    }
+
+    public ResourceAllocation release(Long id) {
+        ResourceAllocation a = findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Allocation not found"));
+        if (!"Allocated".equals(a.getStatus()))
+            throw new IllegalArgumentException("Allocation is not active");
+        a.setStatus("Released");
+        a.setReleaseDate(LocalDateTime.now());
+        return a;
+    }
+
+    public ResourceAllocation cancel(Long id) {
+        ResourceAllocation a = findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Allocation not found"));
+        if (!"Allocated".equals(a.getStatus()))
+            throw new IllegalArgumentException("Allocation is not active");
+        a.setStatus("Cancelled");
+        a.setReleaseDate(LocalDateTime.now());
+        return a;
+    }
+}

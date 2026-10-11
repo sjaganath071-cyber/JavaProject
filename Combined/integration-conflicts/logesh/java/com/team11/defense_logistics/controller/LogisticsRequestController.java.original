@@ -1,0 +1,142 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.LogisticsRequest;
+import com.team11.defense_logistics.service.LogisticsRequestService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/requests")
+public class LogisticsRequestController {
+
+    private final LogisticsRequestService requestService;
+
+    public LogisticsRequestController(
+            LogisticsRequestService requestService) {
+        this.requestService = requestService;
+    }
+
+    @GetMapping
+    public String listRequests(Model model) {
+        model.addAttribute("requests", requestService.getAllRequests());
+        return "requests/list";
+    }
+
+    @GetMapping("/new")
+    public String newRequest(Model model) {
+        model.addAttribute("request", new LogisticsRequest());
+        model.addAttribute("formAction", "/requests");
+        return "requests/form";
+    }
+
+    @PostMapping
+    public String createRequest(
+            @Valid @ModelAttribute("request") LogisticsRequest request,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/requests");
+            return "requests/form";
+        }
+        try {
+            requestService.createRequest(request);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("request.invalid", exception.getMessage());
+            model.addAttribute("formAction", "/requests");
+            return "requests/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Logistics request created.");
+        return "redirect:/requests";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editRequest(@PathVariable Long id, Model model) {
+        LogisticsRequest request = requestService.getRequestById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Logistics request not found"));
+        if (!"Pending".equals(request.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Only pending requests can be edited");
+        }
+        model.addAttribute("request", request);
+        model.addAttribute("formAction", "/requests/update/" + id);
+        return "requests/form";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateRequest(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("request") LogisticsRequest request,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/requests/update/" + id);
+            return "requests/form";
+        }
+        try {
+            requestService.updateRequest(id, request);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("request.invalid", exception.getMessage());
+            model.addAttribute("formAction", "/requests/update/" + id);
+            return "requests/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Logistics request updated.");
+        return "redirect:/requests";
+    }
+
+    @PostMapping("/status/{id}")
+    public String updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            RedirectAttributes redirectAttributes) {
+        try {
+            if (requestService.getRequestById(id).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Logistics request not found: " + id);
+            }
+            if ("Approved".equalsIgnoreCase(status)
+                    || "Rejected".equalsIgnoreCase(status)) {
+                throw new IllegalArgumentException(
+                        "Approval decisions must be recorded through the Approvals module");
+            }
+            requestService.updateStatus(id, status);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Logistics request status updated.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getMessage());
+        }
+        return "redirect:/requests";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteRequest(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            requestService.deleteRequest(id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Logistics request deleted.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getMessage());
+        }
+        return "redirect:/requests";
+    }
+}

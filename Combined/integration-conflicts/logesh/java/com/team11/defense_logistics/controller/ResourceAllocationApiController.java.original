@@ -1,0 +1,79 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.ResourceAllocation;
+import com.team11.defense_logistics.service.ResourceAllocationService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/v1/allocations")
+public class ResourceAllocationApiController {
+    private final ResourceAllocationService service;
+    public ResourceAllocationApiController(ResourceAllocationService service) { this.service = service; }
+
+    @GetMapping
+    public List<ResourceAllocation> all() { return service.findAll(); }
+
+    @GetMapping("/{id}")
+    public ResourceAllocation one(@PathVariable Long id) {
+        return service.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Allocation not found: " + id));
+    }
+
+    @GetMapping("/request/{id}")
+    public List<ResourceAllocation> byRequest(@PathVariable Long id) {
+        return service.byRequest(id);
+    }
+
+    @GetMapping("/vehicle/{id}")
+    public List<ResourceAllocation> byVehicle(@PathVariable Long id) {
+        return service.byVehicle(id);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<ResourceAllocation> byStatus(@PathVariable String status) {
+        return service.byStatus(status);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResourceAllocation create(@Valid @RequestBody ResourceAllocation allocation) {
+        return service.create(allocation);
+    }
+
+    @PatchMapping("/{id}/release")
+    public ResourceAllocation release(@PathVariable Long id) { return service.release(id); }
+
+    @PatchMapping("/{id}/cancel")
+    public ResourceAllocation cancel(@PathVariable Long id) { return service.cancel(id); }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        String message = exception.getMessage();
+        if (message != null
+                && (message.startsWith("Allocation not found")
+                || message.startsWith("Logistics request not found")
+                || message.startsWith("Vehicle not found"))) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+        }
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationFailure(
+            MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest().body(message);
+    }
+}

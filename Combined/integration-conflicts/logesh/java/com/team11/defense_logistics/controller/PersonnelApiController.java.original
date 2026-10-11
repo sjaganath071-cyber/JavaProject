@@ -1,0 +1,85 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Personnel;
+import com.team11.defense_logistics.service.PersonnelService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/v1/personnel")
+public class PersonnelApiController {
+
+    private final PersonnelService personnelService;
+
+    public PersonnelApiController(PersonnelService personnelService) {
+        this.personnelService = personnelService;
+    }
+
+    @GetMapping
+    public List<Personnel> getAllPersonnel() {
+        return personnelService.getAllPersonnel();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Personnel> getPersonnelById(
+            @PathVariable Long id) {
+        return personnelService.getPersonnelById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Personnel> createPersonnel(
+            @Valid @RequestBody Personnel personnel) {
+        Personnel created = personnelService.createPersonnel(personnel);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Personnel> updatePersonnel(
+            @PathVariable Long id,
+            @Valid @RequestBody Personnel personnel) {
+        return ResponseEntity.ok(
+                personnelService.updatePersonnel(id, personnel));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePersonnel(@PathVariable Long id) {
+        personnelService.deletePersonnel(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        String message = exception.getMessage();
+        if (message != null && message.startsWith("Personnel record not found")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+        }
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationFailure(
+            MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest().body(message);
+    }
+}

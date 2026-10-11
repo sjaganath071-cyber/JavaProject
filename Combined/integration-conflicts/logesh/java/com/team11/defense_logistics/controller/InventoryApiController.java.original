@@ -1,0 +1,92 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Inventory;
+import com.team11.defense_logistics.service.InventoryService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/inventory")
+public class InventoryApiController {
+
+    private final InventoryService inventoryService;
+
+    public InventoryApiController(
+            InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
+    @GetMapping
+    public List<Inventory> getAllItems() {
+        return inventoryService.getAllItems();
+    }
+
+    @GetMapping("/low-stock")
+    public List<Inventory> getLowStockItems() {
+        return inventoryService.getLowStockItems();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Inventory> getItemById(
+            @PathVariable Long id) {
+
+        return inventoryService.getItemById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Inventory> createItem(
+            @Valid @RequestBody Inventory item) {
+
+        Inventory created = inventoryService.createItem(item);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Inventory> updateItem(
+            @PathVariable Long id,
+            @Valid @RequestBody Inventory item) {
+
+        return ResponseEntity.ok(
+                inventoryService.updateItem(id, item));
+    }
+
+    @PatchMapping("/{id}/quantity")
+    public ResponseEntity<Inventory> updateQuantity(
+            @PathVariable Long id,
+            @RequestParam int quantity) {
+
+        return ResponseEntity.ok(
+                inventoryService.updateQuantity(id, quantity));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteItem(
+            @PathVariable Long id) {
+
+        inventoryService.deleteItem(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+
+        String message = exception.getMessage();
+
+        if (message != null
+                && message.startsWith("Inventory item not found")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(message);
+        }
+
+        return ResponseEntity.badRequest().body(message);
+    }
+}

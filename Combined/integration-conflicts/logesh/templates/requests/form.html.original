@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Request</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+        .container {
+            max-width: 680px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 { color: #203b33; }
+        .field { margin: 16px 0; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #aebbb4;
+            border-radius: 4px;
+            font: inherit;
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        .field-error, .global-errors { color: #b42332; }
+        .form-actions { display: flex; gap: 16px; margin-top: 24px; }
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            color: white;
+            background: #203b33;
+            font: inherit;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .container { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/requests">Back to Requests</a>
+    <h1 th:text="${request.id == null ? 'Add Request' : 'Edit Request'}">Logistics Request</h1>
+    <form th:action="${formAction}" th:object="${request}" method="post">
+        <div class="global-errors" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+        <div class="field">
+            <label for="requesterName">Requester / Team</label>
+            <input id="requesterName" type="text" th:field="*{requesterName}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('requesterName')}"
+               th:errors="*{requesterName}"></p>
+        </div>
+        <div class="field">
+            <label for="resourceType">Resource Type</label>
+            <input id="resourceType" type="text" th:field="*{resourceType}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('resourceType')}"
+               th:errors="*{resourceType}"></p>
+        </div>
+        <div class="field">
+            <label for="quantity">Quantity</label>
+            <input id="quantity" type="number" min="1" step="1"
+                   th:field="*{quantity}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('quantity')}"
+               th:errors="*{quantity}"></p>
+        </div>
+        <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority" th:field="*{priority}" required>
+                <option value="">Select priority</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+            </select>
+            <p class="field-error" th:if="${#fields.hasErrors('priority')}"
+               th:errors="*{priority}"></p>
+        </div>
+        <div class="field">
+            <label for="requiredDate">Required Date</label>
+            <input id="requiredDate" type="date" th:field="*{requiredDate}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('requiredDate')}"
+               th:errors="*{requiredDate}"></p>
+        </div>
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" th:field="*{description}" required></textarea>
+            <p class="field-error" th:if="${#fields.hasErrors('description')}"
+               th:errors="*{description}"></p>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a href="/requests">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

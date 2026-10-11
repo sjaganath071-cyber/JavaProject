@@ -1,0 +1,124 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Personnel;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+public class PersonnelService {
+
+    private final List<Personnel> personnelRecords = new ArrayList<>();
+    private final Validator validator;
+    private Long nextId = 1L;
+
+    public PersonnelService(Validator validator) {
+        this.validator = validator;
+    }
+
+    public synchronized List<Personnel> getAllPersonnel() {
+        return new ArrayList<>(personnelRecords);
+    }
+
+    public synchronized Optional<Personnel> getPersonnelById(Long id) {
+        return personnelRecords.stream()
+                .filter(person -> person.getId().equals(id))
+                .findFirst();
+    }
+
+    public synchronized Personnel createPersonnel(Personnel personnel) {
+        validatePersonnel(personnel);
+
+        String businessId = personnel.getPersonnelId().trim();
+        if (personnelRecords.stream().anyMatch(existing ->
+                existing.getPersonnelId().equalsIgnoreCase(businessId))) {
+            throw new IllegalArgumentException(
+                    "Personnel identifier already exists: " + businessId);
+        }
+
+        normalize(personnel);
+        personnel.setId(nextId++);
+        personnelRecords.add(personnel);
+        return personnel;
+    }
+
+    public synchronized Personnel updatePersonnel(
+            Long id, Personnel updatedPersonnel) {
+        Personnel existing = findOrThrow(id);
+        if (updatedPersonnel == null) {
+            throw new IllegalArgumentException("Personnel details are required");
+        }
+
+        Personnel candidate = new Personnel(
+                existing.getId(), existing.getPersonnelId(),
+                updatedPersonnel.getFullName(), updatedPersonnel.getRank(),
+                updatedPersonnel.getDepartment(), updatedPersonnel.getPhone(),
+                updatedPersonnel.getEmail(), updatedPersonnel.getStatus());
+        validatePersonnel(candidate);
+
+        existing.setFullName(candidate.getFullName().trim());
+        existing.setRank(candidate.getRank().trim());
+        existing.setDepartment(candidate.getDepartment().trim());
+        existing.setPhone(trimToNull(candidate.getPhone()));
+        existing.setEmail(trimToNull(candidate.getEmail()));
+        existing.setStatus(normalizeStatus(candidate.getStatus()));
+        return existing;
+    }
+
+    public synchronized void deletePersonnel(Long id) {
+        personnelRecords.remove(findOrThrow(id));
+    }
+
+    private Personnel findOrThrow(Long id) {
+        return getPersonnelById(id).orElseThrow(
+                () -> new IllegalArgumentException(
+                        "Personnel record not found: " + id));
+    }
+
+    private void validatePersonnel(Personnel personnel) {
+        if (personnel == null) {
+            throw new IllegalArgumentException("Personnel details are required");
+        }
+
+        Set<ConstraintViolation<Personnel>> violations =
+                validator.validate(personnel);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .distinct()
+                    .sorted(Comparator.naturalOrder())
+                    .collect(Collectors.joining("; "));
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private void normalize(Personnel personnel) {
+        personnel.setPersonnelId(personnel.getPersonnelId().trim());
+        personnel.setFullName(personnel.getFullName().trim());
+        personnel.setRank(personnel.getRank().trim());
+        personnel.setDepartment(personnel.getDepartment().trim());
+        personnel.setPhone(trimToNull(personnel.getPhone()));
+        personnel.setEmail(trimToNull(personnel.getEmail()));
+        personnel.setStatus(normalizeStatus(personnel.getStatus()));
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private String normalizeStatus(String status) {
+        return "active".equalsIgnoreCase(status.trim())
+                ? "Active"
+                : "Inactive";
+    }
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${formTitle} + ' | Defense Logistics'">
+        Maintenance Form
+    </title>
+    <link rel="stylesheet" th:href="@{/css/maintenance.css}">
+</head>
+<body>
+
+<div class="maintenance-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">MAINTENANCE OPERATIONS</p>
+            <h1 th:text="${formTitle}">Maintenance Record</h1>
+            <p class="subtitle">
+                Enter maintenance scheduling and resource information.
+            </p>
+        </div>
+
+        <a class="button button-secondary" th:href="@{/maintenance}">
+            Back to Maintenance
+        </a>
+    </header>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="content-card form-card">
+
+        <form th:action="${formAction}"
+              th:object="${maintenance}"
+              method="post">
+
+            <div class="form-error-summary"
+                 th:if="${#fields.hasErrors('*')}">
+                Please correct the validation errors below.
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-field">
+                    <label for="maintenanceCode">Maintenance Reference *</label>
+                    <input type="text"
+                           id="maintenanceCode"
+                           th:field="*{maintenanceCode}"
+                           placeholder="e.g. MNT-1001"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{maintenanceCode}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="resourceCode">Asset or Vehicle Code *</label>
+                    <input type="text"
+                           id="resourceCode"
+                           th:field="*{resourceCode}"
+                           placeholder="e.g. EQ-1001 or VEH-1001"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{resourceCode}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="resourceType">Resource Type *</label>
+                    <select id="resourceType"
+                            th:field="*{resourceType}"
+                            required>
+                        <option value="EQUIPMENT">Equipment</option>
+                        <option value="VEHICLE">Vehicle</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{resourceType}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="maintenanceType">Maintenance Type *</label>
+                    <select id="maintenanceType"
+                            th:field="*{maintenanceType}"
+                            required>
+                        <option value="PREVENTIVE">Preventive</option>
+                        <option value="CORRECTIVE">Corrective</option>
+                        <option value="INSPECTION">Inspection</option>
+                        <option value="EMERGENCY">Emergency</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{maintenanceType}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="scheduledDate">Scheduled Date *</label>
+                    <input type="date"
+                           id="scheduledDate"
+                           th:field="*{scheduledDate}"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{scheduledDate}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="completionDate">Completion Date</label>
+                    <input type="date"
+                           id="completionDate"
+                           th:field="*{completionDate}">
+                    <small class="field-error"
+                           th:errors="*{completionDate}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="status">Status *</label>
+                    <select id="status"
+                            th:field="*{status}"
+                            required>
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{status}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="estimatedCost">Estimated Cost *</label>
+                    <input type="number"
+                           id="estimatedCost"
+                           th:field="*{estimatedCost}"
+                           min="0"
+                           step="0.01"
+                           placeholder="0.00"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{estimatedCost}"></small>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="description">Maintenance Description *</label>
+                    <textarea id="description"
+                              th:field="*{description}"
+                              rows="4"
+                              placeholder="Describe the maintenance work required"
+                              required></textarea>
+                    <small class="field-error"
+                           th:errors="*{description}"></small>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="assignedTechnician">Assigned Technician</label>
+                    <input type="text"
+                           id="assignedTechnician"
+                           th:field="*{assignedTechnician}"
+                           placeholder="Enter technician name">
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes"
+                              th:field="*{notes}"
+                              rows="3"
+                              placeholder="Optional notes"></textarea>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <a class="button button-secondary"
+                   th:href="@{/maintenance}">
+                    Cancel
+                </a>
+
+                <button class="button button-primary" type="submit">
+                    Save Maintenance Record
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+</body>
+</html>

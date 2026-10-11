@@ -1,0 +1,31 @@
+<div th:fragment="alerts" class="shared-alerts">
+
+    <div th:if="${successMessage != null}"
+         class="alert alert-success"
+         role="status"
+         th:text="${successMessage}">
+        Operation completed successfully.
+    </div>
+
+    <div th:if="${errorMessage != null}"
+         class="alert alert-error"
+         role="alert"
+         th:text="${errorMessage}">
+        An error occurred.
+    </div>
+
+    <div th:if="${warningMessage != null}"
+         class="alert alert-warning"
+         role="status"
+         th:text="${warningMessage}">
+        Please review this information.
+    </div>
+
+    <div th:if="${infoMessage != null}"
+         class="alert alert-info"
+         role="status"
+         th:text="${infoMessage}">
+        Information.
+    </div>
+
+</div>

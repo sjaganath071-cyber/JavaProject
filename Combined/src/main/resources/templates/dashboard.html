@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Defense Logistics | Dashboard</title>
+
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">DL</div>
+
+            <div>
+                <h2>DEFLOG</h2>
+                <span>Resource Management</span>
+            </div>
+        </div>
+
+        <nav>
+            <a th:href="@{/dashboard}" class="nav-link active">
+                <span>▦</span> Dashboard
+            </a>
+
+            <a th:href="@{/personnel}" class="nav-link">
+                <span>♙</span> Personnel
+            </a>
+
+            <a th:href="@{/assets}" class="nav-link">
+                <span>▣</span> Equipment &amp; Assets
+            </a>
+
+            <a th:href="@{/vehicles}" class="nav-link">
+                <span>▰</span> Vehicles
+            </a>
+
+            <a th:href="@{/inventory}" class="nav-link">
+                <span>▤</span> Inventory
+            </a>
+
+            <a th:href="@{/maintenance}" class="nav-link">
+                <span>⚙</span> Maintenance
+            </a>
+
+            <a th:href="@{/logistics-requests}" class="nav-link">
+                <span>◷</span> Logistics Requests
+            </a>
+
+            <a th:href="@{/approvals}" class="nav-link">
+                <span>✔</span> Approvals
+            </a>
+
+            <a th:href="@{/allocations}" class="nav-link">
+                <span>▣</span> Resource Allocation
+            </a>
+
+            <a th:href="@{/movements}" class="nav-link">
+                <span>⇄</span> Movements
+            </a>
+
+            <a th:href="@{/reports/readiness}" class="nav-link">
+                <span>▣</span> Readiness Reports
+            </a>
+
+            <a th:href="@{/notifications}" class="nav-link">
+                <span>◉</span> Notifications
+            </a>
+
+            <a th:href="@{/audit-history}" class="nav-link">
+                <span>▤</span> Audit History
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            Defense Logistics Management
+        </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">OPERATIONS OVERVIEW</p>
+
+                <h1>Dashboard</h1>
+
+                <p class="subtitle">
+                    Monitor personnel, resources and operational readiness.
+                </p>
+            </div>
+
+            <div class="topbar-badge">
+                <span class="online-dot"></span>
+                System Overview
+            </div>
+
+        </header>
+
+        <div class="alert error-alert"
+             th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+             th:text="${errorMessage}">
+        </div>
+
+        <section class="kpi-grid">
+
+            <article class="kpi-card personnel-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Total Personnel</span>
+                    <span class="kpi-icon">♙</span>
+                </div>
+                <div class="kpi-value" th:if="${summary.personnelDataAvailable != null and summary.personnelDataAvailable}
+                    " th:text="${summary.totalPersonnel}">0</div>
+                <div class="kpi-value unavailable-value" th:unless="${summary.personnelDataAvailable != null and summary.personnelDataAvailable}">Data unavailable</div>
+                <div class="kpi-description" th:if="${summary.personnelDataAvailable != null and summary.personnelDataAvailable}">Available: <span th:text="${summary.availablePersonnel}">0</span></div>
+                <div class="kpi-description" th:unless="${summary.personnelDataAvailable != null and summary.personnelDataAvailable}">Live personnel data is not available.</div>
+            </article>
+
+            <article class="kpi-card assets-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Equipment</span>
+                    <span class="kpi-icon">▣</span>
+                </div>
+                <div class="kpi-value" th:if="${summary.equipmentDataAvailable != null and summary.equipmentDataAvailable}
+                    " th:text="${summary.totalEquipment}">0</div>
+                <div class="kpi-value unavailable-value" th:unless="${summary.equipmentDataAvailable != null and summary.equipmentDataAvailable}">Data unavailable</div>
+                <div class="kpi-description" th:if="${summary.equipmentDataAvailable != null and summary.equipmentDataAvailable}">Serviceable: <span th:text="${summary.serviceableEquipment}">0</span></div>
+                <div class="kpi-description" th:unless="${summary.equipmentDataAvailable != null and summary.equipmentDataAvailable}">Equipment backend data is unavailable.</div>
+            </article>
+
+            <article class="kpi-card vehicles-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Vehicles</span>
+                    <span class="kpi-icon">▰</span>
+                </div>
+                <div class="kpi-value" th:if="${summary.vehicleDataAvailable != null and summary.vehicleDataAvailable}
+                    " th:text="${summary.totalVehicles}">0</div>
+                <div class="kpi-value unavailable-value" th:unless="${summary.vehicleDataAvailable != null and summary.vehicleDataAvailable}">Data unavailable</div>
+                <div class="kpi-description" th:if="${summary.vehicleDataAvailable != null and summary.vehicleDataAvailable}">Available: <span th:text="${summary.availableVehicles}">0</span></div>
+                <div class="kpi-description" th:unless="${summary.vehicleDataAvailable != null and summary.vehicleDataAvailable}">Vehicle backend data is unavailable.</div>
+            </article>
+
+            <article class="kpi-card maintenance-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Maintenance</span>
+                    <span class="kpi-icon">⚙</span>
+                </div>
+                <div class="kpi-value" th:if="${summary.maintenanceDataAvailable != null and summary.maintenanceDataAvailable}
+                    " th:text="${summary.totalMaintenanceTasks}">0</div>
+                <div class="kpi-value unavailable-value" th:unless="${summary.maintenanceDataAvailable != null and summary.maintenanceDataAvailable}">Data unavailable</div>
+                <div class="kpi-description" th:if="${summary.maintenanceDataAvailable != null and summary.maintenanceDataAvailable}">Pending: <span th:text="${summary.pendingMaintenanceTasks}">0</span></div>
+                <div class="kpi-description" th:unless="${summary.maintenanceDataAvailable != null and summary.maintenanceDataAvailable}">Maintenance backend data is unavailable.</div>
+            </article>
+
+            <article class="kpi-card requests-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Logistics Requests</span>
+                    <span class="kpi-icon">◷</span>
+                </div>
+                <div class="kpi-value" th:if="${summary.logisticsRequestDataAvailable != null and summary.logisticsRequestDataAvailable}
+                    " th:text="${summary.totalLogisticsRequests}">0</div>
+                <div class="kpi-value unavailable-value" th:unless="${summary.logisticsRequestDataAvailable != null and summary.logisticsRequestDataAvailable}">Data unavailable</div>
+                <div class="kpi-description" th:if="${summary.logisticsRequestDataAvailable != null and summary.logisticsRequestDataAvailable}">Pending: <span th:text="${summary.pendingLogisticsRequests}">0</span></div>
+                <div class="kpi-description" th:unless="${summary.logisticsRequestDataAvailable != null and summary.logisticsRequestDataAvailable}">Request backend data is unavailable.</div>
+            </article>
+
+            <article class="kpi-card stock-card">
+                <div class="kpi-top">
+                    <span class="kpi-label">Readiness</span>
+                    <span class="kpi-icon">▤</span>
+                </div>
+                <div class="kpi-value">
+                    <a th:href="@{/reports/readiness}" class="readiness-link">Open report</a>
+                </div>
+                <div class="kpi-description">Operational readiness overview</div>
+            </article>
+
+        </section>
+
+        <!-- Requests and Resource Overview -->
+        <section class="content-grid">
+
+            <!-- Recent Requests -->
+            <article class="panel requests-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Recent Logistics Requests</h2>
+
+                        <p>
+                            Latest requests submitted by units
+                        </p>
+                    </div>
+
+                    <span class="panel-icon">▤</span>
+
+                </div>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+                        <tr>
+                            <th>REQUEST ID</th>
+                            <th>UNIT</th>
+                            <th>RESOURCE</th>
+                            <th>STATUS</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        <tr th:each="request : ${recentRequests}">
+
+                            <td class="request-id"
+                                th:text="${request.id}">
+                                REQ-1001
+                            </td>
+
+                            <td th:text="${request.unit}">
+                                Unit Alpha
+                            </td>
+
+                            <td th:text="${request.resource}">
+                                Transport Vehicle
+                            </td>
+
+                            <td>
+
+                                <span class="status-badge"
+                                      th:classappend="${request.status == 'APPROVED'} ? ' approved' : (${request.status == 'REJECTED'} ? ' rejected' : ' pending')"
+                                      th:text="${request.status}">
+                                    PENDING
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(recentRequests)}">
+
+                            <td colspan="4" class="empty-state">
+                                No recent logistics requests available.
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="panel-footer">
+                    Request data will be connected to the backend API.
+                </div>
+
+            </article>
+
+            <!-- Resource Overview -->
+            <article class="panel resource-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Resource Overview</h2>
+
+                        <p>
+                            Current resource summary
+                        </p>
+                    </div>
+
+                    <span class="panel-icon">▥</span>
+
+                </div>
+
+                <div class="resource-item">
+
+                    <div class="resource-heading">
+                        <span>Total Personnel</span>
+
+                        <strong th:text="${summary.totalPersonnel}">
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill personnel-fill"></div>
+                    </div>
+
+                </div>
+
+                <div class="resource-item">
+
+                    <div class="resource-heading">
+                        <span>Available Assets</span>
+
+                        <strong th:text="${summary.availableAssets}">
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill asset-fill"></div>
+                    </div>
+
+                </div>
+
+                <div class="resource-item">
+
+                    <div class="resource-heading">
+                        <span>Available Vehicles</span>
+
+                        <strong th:text="${summary.availableVehicles}">
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill vehicle-fill"></div>
+                    </div>
+
+                </div>
+
+                <div class="resource-note">
+                    Availability indicators are illustrative until the
+                    backend provides verified totals and percentages.
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- Alerts -->
+        <section class="content-grid alerts-grid">
+
+            <!-- Maintenance Alerts -->
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Maintenance Alerts</h2>
+
+                        <p>
+                            Equipment requiring attention
+                        </p>
+                    </div>
+
+                    <span class="panel-icon warning-icon">⚙</span>
+
+                </div>
+
+                <div class="alert-row warning">
+
+                    <div class="alert-symbol">!</div>
+
+                    <div class="alert-content">
+
+                        <strong>Scheduled Maintenance</strong>
+
+                        <p>
+                            Items requiring scheduled maintenance.
+                        </p>
+
+                    </div>
+
+                    <span class="alert-count"
+                          th:text="${summary.maintenanceDue}">
+                        0
+                    </span>
+
+                </div>
+
+            </article>
+
+            <!-- Inventory Alerts -->
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Inventory Alerts</h2>
+
+                        <p>
+                            Supplies requiring replenishment
+                        </p>
+                    </div>
+
+                    <span class="panel-icon danger-icon">!</span>
+
+                </div>
+
+                <div class="alert-row danger">
+
+                    <div class="alert-symbol">!</div>
+
+                    <div class="alert-content">
+
+                        <strong>Low Stock</strong>
+
+                        <p>
+                            Items below their configured stock thresholds.
+                        </p>
+
+                    </div>
+
+                    <span class="alert-count"
+                          th:text="${summary.lowStockItems}">
+                        0
+                    </span>
+
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+
+            <div class="quick-actions-heading">
+
+                <div>
+                    <h2>Quick Actions</h2>
+
+                    <p>
+                        Quickly access common resource management tasks.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="action-buttons">
+
+                <a th:href="@{/personnel}"
+                   class="action-button primary-action">
+
+                    <span>♙</span>
+                    View Personnel
+
+                </a>
+
+                <a th:href="@{/assets}"
+                   class="action-button primary-action">
+
+                    <span>▣</span>
+                    View Equipment
+
+                </a>
+
+                <a th:href="@{/vehicles}"
+                   class="action-button primary-action">
+
+                    <span>▰</span>
+                    View Vehicles
+
+                </a>
+
+                <a th:href="@{/logistics-requests}"
+                   class="action-button secondary-action">
+
+                    <span>◷</span>
+                    View Requests
+
+                </a>
+
+                <a th:href="@{/reports/readiness}"
+                   class="action-button secondary-action">
+
+                    <span>▤</span>
+                    Open Readiness Reports
+
+                </a>
+
+            </div>
+
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+
+            <span>
+                Defense Logistics &amp; Resource Management
+            </span>
+
+            <span>
+                Internal Resource Management System
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

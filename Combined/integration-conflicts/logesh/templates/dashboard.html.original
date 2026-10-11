@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defense Logistics Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+
+        header {
+            padding: 24px clamp(20px, 6vw, 80px);
+            color: white;
+            background: #203b33;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: #d5e2dc;
+        }
+
+        main {
+            width: min(100% - 40px, 1000px);
+            margin: 40px auto;
+        }
+
+        h2 {
+            margin: 0 0 18px;
+            color: #203b33;
+            font-size: 20px;
+        }
+
+        nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        nav a {
+            display: flex;
+            min-height: 68px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px;
+            border: 1px solid #d5ddd9;
+            border-radius: 6px;
+            color: #203b33;
+            background: white;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        nav a:hover,
+        nav a:focus-visible {
+            border-color: #203b33;
+            background: #edf3ef;
+        }
+
+        nav a span {
+            color: #61756c;
+            font-size: 20px;
+        }
+
+        footer {
+            padding: 20px;
+            color: #58645e;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Defense Logistics Management System</h1>
+    <p>Operations dashboard</p>
+</header>
+
+<main>
+    <h2>Logistics Management</h2>
+    <nav aria-label="Logistics modules">
+        <a href="/vehicles">Vehicles <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/inventory">Inventory <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/maintenance">Maintenance <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/requests">Logistics Requests <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/approvals">Approvals <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/allocations">Resource Allocations <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/movements">Movement Tracking <span aria-hidden="true">&rsaquo;</span></a>
+        <a href="/personnel">Personnel Management <span aria-hidden="true">&rsaquo;</span></a>
+    </nav>
+</main>
+
+<footer>Defense Logistics</footer>
+</body>
+</html>

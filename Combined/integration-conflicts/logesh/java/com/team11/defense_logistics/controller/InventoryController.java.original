@@ -1,0 +1,118 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Inventory;
+import com.team11.defense_logistics.service.InventoryService;
+import jakarta.validation.Valid;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/inventory")
+public class InventoryController {
+
+    private final InventoryService inventoryService;
+
+    public InventoryController(
+            InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
+    @GetMapping
+    public String listInventory(Model model) {
+        model.addAttribute(
+                "inventoryItems",
+                inventoryService.getAllItems());
+
+        return "inventory/list";
+    }
+
+    @GetMapping("/new")
+    public String newItem(Model model) {
+        Inventory item = new Inventory();
+        item.setStatus("Out of Stock");
+        model.addAttribute("item", item);
+        model.addAttribute("formAction", "/inventory");
+        return "inventory/form";
+    }
+
+    @PostMapping
+    public String createItem(
+            @Valid @ModelAttribute("item") Inventory item,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/inventory");
+            return "inventory/form";
+        }
+        try {
+            inventoryService.createItem(item);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.rejectValue("itemCode", "duplicate", exception.getMessage());
+            model.addAttribute("formAction", "/inventory");
+            return "inventory/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Inventory item created.");
+        return "redirect:/inventory";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editItem(@PathVariable Long id, Model model) {
+        Inventory item = inventoryService.getItemById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND,
+                        "Inventory item not found"));
+        model.addAttribute("item", item);
+        model.addAttribute("formAction", "/inventory/update/" + id);
+        return "inventory/form";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateItem(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("item") Inventory item,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/inventory/update/" + id);
+            return "inventory/form";
+        }
+        try {
+            inventoryService.updateItem(id, item);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("inventory.invalid", exception.getMessage());
+            model.addAttribute("formAction", "/inventory/update/" + id);
+            return "inventory/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Inventory item updated.");
+        return "redirect:/inventory";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteItem(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            inventoryService.deleteItem(id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Inventory item deleted.");
+        } catch (org.springframework.web.server.ResponseStatusException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getReason());
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getMessage());
+        }
+        return "redirect:/inventory";
+    }
+}

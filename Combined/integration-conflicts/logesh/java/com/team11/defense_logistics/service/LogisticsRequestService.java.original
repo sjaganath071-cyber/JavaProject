@@ -1,0 +1,219 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.LogisticsRequest;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class LogisticsRequestService {
+
+    private static final List<String> VALID_PRIORITIES =
+        List.of("Low", "Medium", "High", "Critical");
+    private static final List<String> VALID_STATUSES =
+        List.of("Pending", "Approved", "Rejected", "Fulfilled");
+
+    private final ObjectProvider<ApprovalService> approvalService;
+    private final ObjectProvider<ResourceAllocationService> allocationService;
+
+    private final List<LogisticsRequest> requests = new ArrayList<>(
+        List.of(
+            new LogisticsRequest(
+                1L, "Operations Team", "Medical Supplies", 50,
+                "High", LocalDate.now().plusDays(2),
+                "Medical kits for field personnel", "Pending"
+            ),
+            new LogisticsRequest(
+                2L, "Transport Team", "Vehicle Spare Parts", 10,
+                "Medium", LocalDate.now().plusDays(5),
+                "Replacement parts for transport vehicles", "Pending"
+            ),
+            new LogisticsRequest(
+                3L, "Base Logistics", "Food Supplies", 200,
+                "Low", LocalDate.now().plusDays(7),
+                "Weekly food supply", "Pending"
+            )
+        )
+    );
+
+    private Long nextId = 4L;
+
+    public LogisticsRequestService(
+            ObjectProvider<ApprovalService> approvalService,
+            ObjectProvider<ResourceAllocationService> allocationService) {
+        this.approvalService = approvalService;
+        this.allocationService = allocationService;
+    }
+
+    public synchronized List<LogisticsRequest> getAllRequests() {
+        return new ArrayList<>(requests);
+    }
+
+    public synchronized Optional<LogisticsRequest> getRequestById(Long id) {
+        return requests.stream()
+                .filter(request -> request.getId().equals(id))
+                .findFirst();
+    }
+
+    public synchronized List<LogisticsRequest> getByStatus(String status) {
+        return requests.stream()
+                .filter(request -> request.getStatus().equalsIgnoreCase(status))
+                .toList();
+    }
+
+    public synchronized LogisticsRequest createRequest(
+            LogisticsRequest request) {
+        validateRequest(request);
+
+        normalizeRequest(request);
+        request.setId(nextId++);
+        request.setStatus("Pending");
+        requests.add(request);
+
+        return request;
+    }
+
+    public synchronized LogisticsRequest updateRequest(
+            Long id, LogisticsRequest updated) {
+        LogisticsRequest existing = findOrThrow(id);
+
+        if (!"Pending".equals(existing.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only pending requests can be edited");
+        }
+        if (updated == null) {
+            throw new IllegalArgumentException(
+                "Request details are required");
+        }
+
+        LogisticsRequest candidate = new LogisticsRequest(
+            existing.getId(),
+            updated.getRequesterName() == null
+                ? existing.getRequesterName() : updated.getRequesterName(),
+            updated.getResourceType() == null
+                ? existing.getResourceType() : updated.getResourceType(),
+            updated.getQuantity(),
+            updated.getPriority() == null
+                ? existing.getPriority() : updated.getPriority(),
+            updated.getRequiredDate() == null
+                ? existing.getRequiredDate() : updated.getRequiredDate(),
+            updated.getDescription() == null
+                ? existing.getDescription() : updated.getDescription(),
+            existing.getStatus());
+        validateRequest(candidate);
+
+        normalizeRequest(candidate);
+        existing.setRequesterName(candidate.getRequesterName());
+        existing.setResourceType(candidate.getResourceType());
+        existing.setQuantity(candidate.getQuantity());
+        existing.setPriority(candidate.getPriority());
+        existing.setRequiredDate(candidate.getRequiredDate());
+        existing.setDescription(candidate.getDescription());
+
+        return existing;
+    }
+
+    public synchronized LogisticsRequest updateStatus(
+            Long id, String status) {
+        LogisticsRequest request = findOrThrow(id);
+
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new IllegalArgumentException(
+                    "Status must be Pending, Approved, Rejected, or Fulfilled");
+        }
+
+        if ("Pending".equals(request.getStatus())
+                && ("Approved".equals(status) || "Rejected".equals(status))) {
+            request.setStatus(status);
+            return request;
+        }
+
+        if ("Approved".equals(request.getStatus())
+                && "Fulfilled".equals(status)) {
+            request.setStatus(status);
+            return request;
+        }
+
+        if (!"Pending".equals(request.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only approved requests can be fulfilled; other decisions are final");
+        }
+
+        throw new IllegalArgumentException(
+                "Pending requests must be approved or rejected through the Approvals module");
+    }
+
+    public void deleteRequest(Long id) {
+        LogisticsRequest request = findOrThrow(id);
+
+        if (!"Pending".equals(request.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only pending requests can be deleted");
+        }
+
+        boolean hasApproval = !approvalService.getObject()
+                .findByRequestId(id).isEmpty();
+        boolean hasActiveAllocation = allocationService.getObject()
+                .byRequest(id).stream()
+                .anyMatch(allocation ->
+                        "Allocated".equalsIgnoreCase(allocation.getStatus()));
+        if (hasApproval || hasActiveAllocation) {
+            throw new IllegalArgumentException(
+                    "Request cannot be deleted while an approval or active allocation references it");
+        }
+
+        synchronized (this) {
+            LogisticsRequest current = findOrThrow(id);
+            if (!"Pending".equals(current.getStatus())) {
+                throw new IllegalArgumentException(
+                        "Only pending requests can be deleted");
+                }
+            requests.remove(current);
+        }
+    }
+
+    private LogisticsRequest findOrThrow(Long id) {
+        return getRequestById(id).orElseThrow(
+                () -> new IllegalArgumentException(
+                        "Logistics request not found: " + id));
+    }
+
+    private void validateRequest(LogisticsRequest request) {
+        if (request == null
+                || request.getRequesterName() == null
+                || request.getRequesterName().isBlank()
+                || request.getResourceType() == null
+                || request.getResourceType().isBlank()
+                || request.getQuantity() < 1
+                || request.getPriority() == null
+                || !VALID_PRIORITIES.contains(request.getPriority())
+                || request.getRequiredDate() == null
+                || request.getDescription() == null
+                || request.getDescription().isBlank()) {
+            throw new IllegalArgumentException(
+                    "Provide valid requester, resource, quantity, priority, required date, and description");
+        }
+
+        if (request.getRequiredDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                    "Required date cannot be in the past");
+        }
+
+        if (request.getStatus() != null
+                && !VALID_STATUSES.contains(request.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Status must be Pending, Approved, Rejected, or Fulfilled");
+        }
+    }
+
+    private void normalizeRequest(LogisticsRequest request) {
+        request.setRequesterName(request.getRequesterName().trim());
+        request.setResourceType(request.getResourceType().trim());
+        request.setPriority(request.getPriority().trim());
+        request.setDescription(request.getDescription().trim());
+    }
+}

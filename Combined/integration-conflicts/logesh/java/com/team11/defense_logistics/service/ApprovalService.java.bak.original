@@ -1,0 +1,42 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Approval;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Service
+public class ApprovalService {
+    private final Map<Long, Approval> records = new LinkedHashMap<>();
+    private final AtomicLong sequence = new AtomicLong(1);
+
+    public List<Approval> findAll() {
+        return new ArrayList<>(records.values());
+    }
+
+    public Optional<Approval> findById(Long id) {
+        return Optional.ofNullable(records.get(id));
+    }
+
+    public List<Approval> findByRequestId(Long requestId) {
+        return records.values().stream()
+            .filter(a -> Objects.equals(a.getRequestId(), requestId)).toList();
+    }
+
+    public Approval create(Approval a) {
+        if (a == null || a.getRequestId() == null || a.getRequestId() <= 0)
+            throw new IllegalArgumentException("Positive requestId required");
+        if (a.getApproverName() == null || a.getApproverName().isBlank())
+            throw new IllegalArgumentException("Approver name required");
+        if (!"Approved".equals(a.getDecision()) && !"Rejected".equals(a.getDecision()))
+            throw new IllegalArgumentException("Decision must be Approved or Rejected");
+        if (!findByRequestId(a.getRequestId()).isEmpty())
+            throw new IllegalArgumentException("Decision already exists for this request");
+
+        a.setId(sequence.getAndIncrement());
+        a.setDecisionDate(LocalDateTime.now());
+        records.put(a.getId(), a);
+        return a;
+    }
+}

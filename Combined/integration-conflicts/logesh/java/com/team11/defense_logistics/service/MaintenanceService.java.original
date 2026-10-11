@@ -1,0 +1,208 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Maintenance;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class MaintenanceService {
+
+    private static final List<String> VALID_STATUSES = List.of(
+            "Pending", "In Progress", "Completed");
+
+    private final VehicleService vehicleService;
+
+    private final List<Maintenance> records = new ArrayList<>(
+        List.of(
+            new Maintenance(
+                1L, 1L, "Routine Service",
+                "Engine oil and filter replacement",
+                LocalDate.now().plusDays(2), null,
+                "Pending", new BigDecimal("2500.00")
+            ),
+            new Maintenance(
+                2L, 2L, "Engine Repair",
+                "Inspect and repair engine fault",
+                LocalDate.now().minusDays(2), null,
+                "In Progress", new BigDecimal("8500.00")
+            ),
+            new Maintenance(
+                3L, 3L, "Tyre Replacement",
+                "Replace worn front tyres",
+                LocalDate.now().minusDays(10),
+                LocalDate.now().minusDays(8),
+                "Completed", new BigDecimal("4200.00")
+            )
+        )
+    );
+
+    private Long nextId = 4L;
+
+    public MaintenanceService(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
+
+    public synchronized List<Maintenance> getAllRecords() {
+        return new ArrayList<>(records);
+    }
+
+    public synchronized Optional<Maintenance> getRecordById(Long id) {
+        return records.stream()
+                .filter(record -> record.getId().equals(id))
+                .findFirst();
+    }
+
+    public synchronized List<Maintenance> getByVehicleId(Long vehicleId) {
+        return records.stream()
+                .filter(record ->
+                        record.getVehicleId().equals(vehicleId))
+                .toList();
+    }
+
+    public synchronized List<Maintenance> getByStatus(String status) {
+        return records.stream()
+                .filter(record ->
+                        record.getStatus().equalsIgnoreCase(status))
+                .toList();
+    }
+
+    public synchronized Maintenance createRecord(Maintenance record) {
+        validateRecord(record);
+        validateVehicle(record.getVehicleId());
+
+        record.setId(nextId++);
+        record.setStatus("Pending");
+        record.setCompletedDate(null);
+
+        records.add(record);
+        return record;
+    }
+
+    public synchronized Maintenance updateRecord(
+            Long id, Maintenance updated) {
+
+        Maintenance existing = findOrThrow(id);
+        if (updated == null) {
+            throw new IllegalArgumentException(
+                "Maintenance details are required");
+        }
+
+        if ("Completed".equals(existing.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Completed maintenance records cannot be edited");
+        }
+
+        Maintenance candidate = new Maintenance(
+            existing.getId(),
+            updated.getVehicleId() == null
+                ? existing.getVehicleId() : updated.getVehicleId(),
+            updated.getMaintenanceType() == null
+                ? existing.getMaintenanceType() : updated.getMaintenanceType(),
+            updated.getDescription() == null
+                ? existing.getDescription() : updated.getDescription(),
+            updated.getScheduledDate() == null
+                ? existing.getScheduledDate() : updated.getScheduledDate(),
+            existing.getCompletedDate(),
+            existing.getStatus(),
+            updated.getCost() == null ? existing.getCost() : updated.getCost());
+        validateRecord(candidate);
+        validateVehicle(candidate.getVehicleId());
+
+        existing.setVehicleId(candidate.getVehicleId());
+        existing.setMaintenanceType(candidate.getMaintenanceType().trim());
+        existing.setDescription(candidate.getDescription().trim());
+        existing.setScheduledDate(candidate.getScheduledDate());
+        existing.setCost(candidate.getCost());
+
+        return existing;
+    }
+
+    public synchronized Maintenance updateStatus(
+            Long id, String status) {
+
+        Maintenance record = findOrThrow(id);
+
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new IllegalArgumentException(
+                    "Status must be Pending, In Progress, or Completed");
+        }
+
+        boolean validTransition = "Pending".equals(record.getStatus())
+                && "In Progress".equals(status)
+                || "In Progress".equals(record.getStatus())
+                && "Completed".equals(status);
+        if (!validTransition) {
+            throw new IllegalArgumentException(
+                    "Maintenance status must transition Pending to In Progress to Completed");
+        }
+
+        String previousStatus = record.getStatus();
+        LocalDate previousCompletedDate = record.getCompletedDate();
+        record.setStatus(status);
+
+        if ("Completed".equals(status)) {
+            record.setCompletedDate(LocalDate.now());
+        }
+
+        try {
+            vehicleService.reconcileAfterMaintenanceChange(record.getVehicleId());
+        } catch (RuntimeException exception) {
+            record.setStatus(previousStatus);
+            record.setCompletedDate(previousCompletedDate);
+            throw exception;
+        }
+
+        return record;
+    }
+
+    public synchronized void deleteRecord(Long id) {
+        Maintenance record = findOrThrow(id);
+
+        if ("Completed".equals(record.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Completed maintenance records cannot be deleted");
+        }
+
+        records.remove(record);
+    }
+
+    private Maintenance findOrThrow(Long id) {
+        return getRecordById(id).orElseThrow(
+                () -> new IllegalArgumentException(
+                        "Maintenance record not found: " + id));
+    }
+
+    private void validateRecord(Maintenance record) {
+        if (record == null
+                || record.getVehicleId() == null
+                || record.getVehicleId() <= 0
+                || record.getMaintenanceType() == null
+                || record.getMaintenanceType().isBlank()
+                || record.getDescription() == null
+                || record.getDescription().isBlank()
+                || record.getScheduledDate() == null
+                || record.getCost() == null
+                || record.getCost().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "Valid vehicle ID, type, description, date, and cost are required");
+        }
+
+        if (record.getStatus() != null
+                && !VALID_STATUSES.contains(record.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Status must be Pending, In Progress, or Completed");
+        }
+    }
+
+    private void validateVehicle(Long vehicleId) {
+        if (vehicleService.getVehicleById(vehicleId).isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Vehicle not found: " + vehicleId);
+        }
+    }
+}

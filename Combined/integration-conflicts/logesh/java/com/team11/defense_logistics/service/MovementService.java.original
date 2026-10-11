@@ -1,0 +1,136 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Movement;
+import com.team11.defense_logistics.model.ResourceAllocation;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Service
+public class MovementService {
+
+    private static final List<String> VALID_STATUSES =
+            List.of("Scheduled", "In Transit", "Completed", "Cancelled");
+
+    private final Map<Long, Movement> records = new LinkedHashMap<>();
+    private final AtomicLong sequence = new AtomicLong(1);
+    private final VehicleService vehicleService;
+    private final ObjectProvider<ResourceAllocationService> allocationService;
+
+    public MovementService(
+            VehicleService vehicleService,
+            ObjectProvider<ResourceAllocationService> allocationService) {
+        this.vehicleService = vehicleService;
+        this.allocationService = allocationService;
+    }
+
+    public List<Movement> findAll() {
+        return new ArrayList<>(records.values());
+    }
+
+    public Optional<Movement> findById(Long id) {
+        return Optional.ofNullable(records.get(id));
+    }
+
+    public List<Movement> byVehicle(Long id) {
+        if (vehicleService.getVehicleById(id).isEmpty()) {
+            throw new IllegalArgumentException("Vehicle not found: " + id);
+        }
+        return records.values().stream()
+            .filter(m -> Objects.equals(m.getVehicleId(), id)).toList();
+    }
+
+    public List<Movement> byStatus(String status) {
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new IllegalArgumentException("Invalid movement status: " + status);
+        }
+        return records.values().stream()
+            .filter(m -> Objects.equals(m.getStatus(), status)).toList();
+    }
+
+    public Movement create(Movement m) {
+        if (m == null || m.getVehicleId() == null || m.getVehicleId() <= 0) {
+            throw new IllegalArgumentException("Positive vehicleId required");
+        }
+        if (m.getOrigin() == null || m.getOrigin().isBlank()
+                || m.getDestination() == null || m.getDestination().isBlank()) {
+            throw new IllegalArgumentException("Origin and destination required");
+        }
+
+        String origin = m.getOrigin().trim();
+        String destination = m.getDestination().trim();
+        if (origin.equalsIgnoreCase(destination)) {
+            throw new IllegalArgumentException("Origin and destination must differ");
+        }
+
+        vehicleService.getVehicleById(m.getVehicleId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Vehicle not found: " + m.getVehicleId()));
+
+        if (m.getAllocationId() != null && m.getAllocationId() <= 0) {
+            throw new IllegalArgumentException("Allocation ID must be positive");
+        }
+
+        if (m.getAllocationId() != null) {
+            ResourceAllocation allocation = allocationService.getObject()
+                    .findById(m.getAllocationId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Allocation not found: " + m.getAllocationId()));
+            if (!"Allocated".equals(allocation.getStatus())
+                    || !Objects.equals(allocation.getVehicleId(), m.getVehicleId())) {
+                throw new IllegalArgumentException(
+                        "Movement allocation must be active and reference the same vehicle");
+            }
+        }
+
+        m.setOrigin(origin);
+        m.setDestination(destination);
+        m.setNotes(m.getNotes() == null || m.getNotes().isBlank()
+                ? null : m.getNotes().trim());
+        m.setId(sequence.getAndIncrement());
+        m.setStatus("Scheduled");
+        m.setDepartureTime(null);
+        m.setArrivalTime(null);
+        records.put(m.getId(), m);
+        return m;
+    }
+
+    public Movement updateStatus(Long id, String status) {
+        Movement m = findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Movement not found: " + id));
+
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new IllegalArgumentException("Invalid movement status: " + status);
+        }
+
+        String previousStatus = m.getStatus();
+        LocalDateTime previousDepartureTime = m.getDepartureTime();
+        LocalDateTime previousArrivalTime = m.getArrivalTime();
+
+        if ("Scheduled".equals(m.getStatus()) && "In Transit".equals(status)) {
+            m.setDepartureTime(LocalDateTime.now());
+            m.setStatus(status);
+        } else if ("Scheduled".equals(m.getStatus()) && "Cancelled".equals(status)) {
+            m.setStatus(status);
+        } else if ("In Transit".equals(m.getStatus()) && "Completed".equals(status)) {
+            m.setArrivalTime(LocalDateTime.now());
+            m.setStatus(status);
+        } else {
+            throw new IllegalArgumentException("Invalid movement status transition");
+        }
+
+        try {
+            vehicleService.reconcileAfterWorkChange(m.getVehicleId());
+        } catch (RuntimeException exception) {
+            m.setStatus(previousStatus);
+            m.setDepartureTime(previousDepartureTime);
+            m.setArrivalTime(previousArrivalTime);
+            throw exception;
+        }
+        return m;
+    }
+}

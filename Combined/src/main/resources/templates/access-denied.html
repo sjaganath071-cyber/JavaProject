@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+<body class="login-page">
+
+    <main class="login-card">
+        <div class="login-brand">
+            <span class="brand-icon">🛡️</span>
+            <h1>Access Denied</h1>
+        </div>
+
+        <p class="login-description">
+            HTTP 403: You are not permitted to access the requested page.
+            Please return to the dashboard or sign in with an account that has access.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <a class="login-button"
+               th:href="@{/dashboard}"
+               style="display:block; text-align:center; text-decoration:none;">
+                Return to Dashboard
+            </a>
+
+            <a class="login-button login-button-secondary"
+               th:href="@{/login}"
+               style="display:block; text-align:center; text-decoration:none;">
+                Go to Login
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>

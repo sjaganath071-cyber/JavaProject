@@ -1,0 +1,26 @@
+
+<aside th:fragment="sidebar" class="sidebar">
+    <div class="sidebar-title">MAIN MENU</div>
+
+    <nav>
+        <a th:href="@{/dashboard}" data-nav-path="/dashboard">Dashboard</a>
+        <a th:href="@{/personnel}" data-nav-path="/personnel">Personnel</a>
+        <a th:href="@{/assets}" data-nav-path="/assets">Equipment & Assets</a>
+        <a th:href="@{/vehicles}" data-nav-path="/vehicles">Vehicles</a>
+        <a th:href="@{/inventory}" data-nav-path="/inventory">Inventory</a>
+        <a th:href="@{/maintenance}" data-nav-path="/maintenance">Maintenance</a>
+        <a th:href="@{/reports/readiness}" data-nav-path="/reports/readiness">Readiness Reports</a>
+
+        <div class="sidebar-title">LOGISTICS</div>
+
+        <a th:href="@{/logistics-requests}" data-nav-path="/logistics-requests">Logistics Requests</a>
+        <a th:href="@{/approvals}" data-nav-path="/approvals">Approvals</a>
+        <a th:href="@{/allocations}" data-nav-path="/allocations">Resource Allocation</a>
+        <a th:href="@{/movements}" data-nav-path="/movements">Movements</a>
+
+        <div class="sidebar-title">SYSTEM</div>
+
+        <a th:href="@{/notifications}" data-nav-path="/notifications">Notifications</a>
+        <a th:href="@{/audit-history}" data-nav-path="/audit-history">Audit History</a>
+    </nav>
+</aside>

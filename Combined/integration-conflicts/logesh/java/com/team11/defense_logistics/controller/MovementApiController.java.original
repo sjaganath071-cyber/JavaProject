@@ -1,0 +1,73 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Movement;
+import com.team11.defense_logistics.service.MovementService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/v1/movements")
+public class MovementApiController {
+    private final MovementService service;
+    public MovementApiController(MovementService service) { this.service = service; }
+
+    @GetMapping
+    public List<Movement> all() { return service.findAll(); }
+
+    @GetMapping("/{id}")
+    public Movement one(@PathVariable Long id) {
+        return service.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Movement not found: " + id));
+    }
+
+    @GetMapping("/vehicle/{id}")
+    public List<Movement> byVehicle(@PathVariable Long id) {
+        return service.byVehicle(id);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<Movement> byStatus(@PathVariable String status) {
+        return service.byStatus(status);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Movement create(@Valid @RequestBody Movement movement) {
+        return service.create(movement);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Movement status(@PathVariable Long id, @RequestParam String status) {
+        return service.updateStatus(id, status);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        String message = exception.getMessage();
+        if (message != null
+                && (message.startsWith("Movement not found")
+                || message.startsWith("Vehicle not found")
+                || message.startsWith("Allocation not found"))) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+        }
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationFailure(
+            MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest().body(message);
+    }
+}

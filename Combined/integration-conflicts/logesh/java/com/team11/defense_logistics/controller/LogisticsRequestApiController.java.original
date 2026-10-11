@@ -1,0 +1,92 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.LogisticsRequest;
+import com.team11.defense_logistics.service.LogisticsRequestService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/requests")
+public class LogisticsRequestApiController {
+
+    private final LogisticsRequestService requestService;
+
+    public LogisticsRequestApiController(
+            LogisticsRequestService requestService) {
+        this.requestService = requestService;
+    }
+
+    @GetMapping
+    public List<LogisticsRequest> getAllRequests() {
+        return requestService.getAllRequests();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LogisticsRequest> getRequestById(
+            @PathVariable Long id) {
+        return requestService.getRequestById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/status/{status}")
+    public List<LogisticsRequest> getByStatus(
+            @PathVariable String status) {
+        return requestService.getByStatus(status);
+    }
+
+    @PostMapping
+    public ResponseEntity<LogisticsRequest> createRequest(
+            @Valid @RequestBody LogisticsRequest request) {
+        LogisticsRequest created = requestService.createRequest(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LogisticsRequest> updateRequest(
+            @PathVariable Long id,
+            @Valid @RequestBody LogisticsRequest request) {
+        return ResponseEntity.ok(
+                requestService.updateRequest(id, request));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<LogisticsRequest> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        if (requestService.getRequestById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if ("Approved".equalsIgnoreCase(status)
+                || "Rejected".equalsIgnoreCase(status)) {
+            throw new IllegalArgumentException(
+                    "Approval decisions must be recorded through the Approvals module");
+        }
+        return ResponseEntity.ok(
+                requestService.updateStatus(id, status));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRequest(
+            @PathVariable Long id) {
+        requestService.deleteRequest(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        String message = exception.getMessage();
+
+        if (message != null
+                && message.startsWith("Logistics request not found")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+        }
+
+        return ResponseEntity.badRequest().body(message);
+    }
+}

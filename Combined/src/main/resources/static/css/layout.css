@@ -1,0 +1,122 @@
+/* ==================================================
+   DEFENSE LOGISTICS — SHARED LAYOUT
+   ================================================== */
+
+:root {
+    --layout-sidebar-width: 250px;
+    --layout-content-padding: 28px;
+    --layout-header-height: 64px;
+}
+
+/* Main application layout */
+
+.layout {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Main page content */
+
+.page-content {
+    flex: 1;
+    min-width: 0;
+    padding: var(--layout-content-padding);
+}
+
+/* Page title area */
+
+.page-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.page-heading h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.3;
+}
+
+.page-description {
+    margin-top: 8px;
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+/* Breadcrumbs */
+
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.breadcrumbs a {
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    opacity: 0.6;
+}
+
+/* Shared page sections */
+
+.page-section {
+    margin-bottom: 28px;
+}
+
+.page-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive layout */
+
+@media (max-width: 900px) {
+    :root {
+        --layout-content-padding: 20px;
+    }
+
+    .page-heading h1 {
+        font-size: 25px;
+    }
+}
+
+@media (max-width: 600px) {
+    :root {
+        --layout-content-padding: 14px;
+    }
+
+    .layout {
+        width: 100%;
+    }
+
+    .page-content {
+        width: 100%;
+        padding: var(--layout-content-padding);
+    }
+
+    .page-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-heading h1 {
+        font-size: 22px;
+    }
+
+    .breadcrumbs {
+        font-size: 12px;
+    }
+}

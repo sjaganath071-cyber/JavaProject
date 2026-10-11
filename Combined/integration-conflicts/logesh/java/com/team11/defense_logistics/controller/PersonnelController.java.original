@@ -1,0 +1,117 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Personnel;
+import com.team11.defense_logistics.service.PersonnelService;
+import jakarta.validation.Valid;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/personnel")
+public class PersonnelController {
+
+    private final PersonnelService personnelService;
+
+    public PersonnelController(PersonnelService personnelService) {
+        this.personnelService = personnelService;
+    }
+
+    @GetMapping
+    public String listPersonnel(Model model) {
+        model.addAttribute("personnelList", personnelService.getAllPersonnel());
+        return "personnel/list";
+    }
+
+    @GetMapping("/new")
+    public String newPersonnel(Model model) {
+        Personnel personnel = new Personnel();
+        personnel.setStatus("Active");
+        model.addAttribute("personnel", personnel);
+        model.addAttribute("formAction", "/personnel");
+        return "personnel/form";
+    }
+
+    @PostMapping
+    public String createPersonnel(
+            @Valid @ModelAttribute("personnel") Personnel personnel,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/personnel");
+            return "personnel/form";
+        }
+
+        try {
+            personnelService.createPersonnel(personnel);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.rejectValue(
+                    "personnelId", "duplicate", exception.getMessage());
+            model.addAttribute("formAction", "/personnel");
+            return "personnel/form";
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Personnel record created.");
+        return "redirect:/personnel";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editPersonnel(@PathVariable Long id, Model model) {
+        Personnel personnel = personnelService.getPersonnelById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Personnel record not found"));
+        model.addAttribute("personnel", personnel);
+        model.addAttribute("formAction", "/personnel/update/" + id);
+        return "personnel/form";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updatePersonnel(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("personnel") Personnel personnel,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/personnel/update/" + id);
+            return "personnel/form";
+        }
+
+        try {
+            personnelService.updatePersonnel(id, personnel);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("personnel.invalid", exception.getMessage());
+            model.addAttribute("formAction", "/personnel/update/" + id);
+            return "personnel/form";
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Personnel record updated.");
+        return "redirect:/personnel";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deletePersonnel(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            personnelService.deletePersonnel(id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Personnel record deleted.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getMessage());
+        }
+        return "redirect:/personnel";
+    }
+}

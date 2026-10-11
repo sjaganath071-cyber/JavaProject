@@ -1,0 +1,73 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Approval;
+import com.team11.defense_logistics.service.ApprovalService;
+import com.team11.defense_logistics.service.LogisticsRequestService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/v1/approvals")
+public class ApprovalApiController {
+    private final ApprovalService service;
+    private final LogisticsRequestService requestService;
+
+    public ApprovalApiController(
+            ApprovalService service,
+            LogisticsRequestService requestService) {
+        this.service = service;
+        this.requestService = requestService;
+    }
+
+    @GetMapping
+    public List<Approval> all() { return service.findAll(); }
+
+    @GetMapping("/{id}")
+    public Approval one(@PathVariable Long id) {
+        return service.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Approval not found: " + id));
+    }
+
+    @GetMapping("/request/{requestId}")
+    public List<Approval> byRequest(@PathVariable Long requestId) {
+        requestService.getRequestById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Logistics request not found: " + requestId));
+        return service.findByRequestId(requestId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Approval create(@Valid @RequestBody Approval a) {
+        return service.create(a);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        String message = exception.getMessage();
+        if (message != null
+                && (message.startsWith("Approval not found")
+                || message.startsWith("Logistics request not found"))) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+        }
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationFailure(
+            MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest().body(message);
+    }
+}

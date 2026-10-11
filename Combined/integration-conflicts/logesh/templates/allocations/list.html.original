@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resource Allocations | Defense Logistics</title>
+    <style>
+        body { margin: 24px; font-family: Arial, sans-serif; color: #222; background: #f4f6f9; }
+        main { max-width: 1200px; margin: auto; padding: 24px; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #d5ddd9; text-align: left; }
+        th { color: white; background: #203b33; }
+        input, select, button { font: inherit; }
+        .message { padding: 10px; background: #edf6ef; }
+        .error { background: #fff0f1; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+        .form-row label { display: grid; gap: 5px; }
+        @media (max-width: 700px) { body { margin: 10px; } main { padding: 14px; } }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Resource Allocations</h1>
+    <nav>
+        <a href="/">Dashboard</a> |
+        <a href="/vehicles">Vehicles</a> |
+        <a href="/requests">Requests</a>
+    </nav>
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p th:if="${#lists.isEmpty(allocations)}">No resource allocations recorded yet.</p>
+
+    <section th:if="${!#lists.isEmpty(approvedRequests) && !#lists.isEmpty(availableVehicles)}">
+        <h2>Create allocation</h2>
+        <form th:action="@{/allocations}" th:object="${allocation}" method="post">
+            <div class="form-row">
+                <label for="requestId">Approved request
+                    <select id="requestId" th:field="*{requestId}" required>
+                        <option value="">Select request</option>
+                        <option th:each="request : ${approvedRequests}"
+                                th:value="${request.id}"
+                                th:text="|${request.id} - ${request.requesterName} (${request.resourceType})|"></option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('requestId')}" th:errors="*{requestId}"></span>
+                </label>
+                <label for="vehicleId">Available vehicle
+                    <select id="vehicleId" th:field="*{vehicleId}" required>
+                        <option value="">Select vehicle</option>
+                        <option th:each="vehicle : ${availableVehicles}"
+                                th:value="${vehicle.id}"
+                                th:text="|${vehicle.id} - ${vehicle.vehicleNumber} (${vehicle.type})|"></option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('vehicleId')}" th:errors="*{vehicleId}"></span>
+                </label>
+                <label for="resourceName">Resource name
+                    <input id="resourceName" type="text" th:field="*{resourceName}" required>
+                    <span th:if="${#fields.hasErrors('resourceName')}" th:errors="*{resourceName}"></span>
+                </label>
+                <label for="allocatedTo">Allocated to
+                    <input id="allocatedTo" type="text" th:field="*{allocatedTo}" required>
+                    <span th:if="${#fields.hasErrors('allocatedTo')}" th:errors="*{allocatedTo}"></span>
+                </label>
+            </div>
+            <div th:if="${#fields.hasGlobalErrors()}">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+            <button type="submit">Allocate</button>
+        </form>
+    </section>
+    <p th:if="${#lists.isEmpty(approvedRequests)}">No approved requests are available for allocation.</p>
+    <p th:if="${!#lists.isEmpty(approvedRequests) && #lists.isEmpty(availableVehicles)}">No available vehicles are currently eligible.</p>
+
+    <table border="1" cellpadding="8">
+        <thead>
+        <tr><th>ID</th><th>Request</th><th>Vehicle</th><th>Resource</th><th>Allocated To</th><th>Status</th><th>Allocated</th><th>Released</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="a : ${allocations}">
+            <td th:text="${a.id}"></td>
+            <td th:text="${a.requestId}"></td>
+            <td th:text="${a.vehicleId}"></td>
+            <td th:text="${a.resourceName}"></td>
+            <td th:text="${a.allocatedTo}"></td>
+            <td th:text="${a.status}"></td>
+            <td th:text="${a.allocationDate}"></td>
+            <td th:text="${a.releaseDate}"></td>
+            <td>
+                <form th:if="${a.status == 'Allocated'}"
+                      th:action="@{/allocations/{id}/release(id=${a.id})}" method="post">
+                    <button type="submit">Release</button>
+                </form>
+                <form th:if="${a.status == 'Allocated'}"
+                      th:action="@{/allocations/{id}/cancel(id=${a.id})}" method="post">
+                    <button type="submit">Cancel</button>
+                </form>
+                <span th:if="${a.status != 'Allocated'}">No actions</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

@@ -1,0 +1,115 @@
+
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Vehicle;
+import com.team11.defense_logistics.service.VehicleService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/vehicles")
+public class VehicleController {
+
+    private final VehicleService vehicleService;
+
+    public VehicleController(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
+
+    @GetMapping
+    public String listVehicles(Model model) {
+        model.addAttribute("vehicles", vehicleService.getAllVehicles());
+        return "vehicles/list";
+    }
+
+    @GetMapping("/new")
+    public String newVehicle(Model model) {
+        Vehicle vehicle = new Vehicle();
+        vehicle.setStatus("Available");
+        model.addAttribute("vehicle", vehicle);
+        model.addAttribute("formAction", "/vehicles");
+        return "vehicles/form";
+    }
+
+    @PostMapping
+    public String createVehicle(
+            @Valid @ModelAttribute("vehicle") Vehicle vehicle,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/vehicles");
+            return "vehicles/form";
+        }
+        try {
+            vehicleService.createVehicle(vehicle);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.rejectValue(
+                    "vehicleNumber", "duplicate", exception.getMessage());
+            model.addAttribute("formAction", "/vehicles");
+            return "vehicles/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Vehicle created.");
+        return "redirect:/vehicles";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editVehicle(@PathVariable Long id, Model model) {
+        Vehicle vehicle = vehicleService.getVehicleById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Vehicle not found"));
+        model.addAttribute("vehicle", vehicle);
+        model.addAttribute("formAction", "/vehicles/update/" + id);
+        return "vehicles/form";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateVehicle(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("vehicle") Vehicle vehicle,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("formAction", "/vehicles/update/" + id);
+            return "vehicles/form";
+        }
+        try {
+            vehicleService.updateVehicle(id, vehicle);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.rejectValue(
+                    "vehicleNumber", "invalid", exception.getMessage());
+            model.addAttribute("formAction", "/vehicles/update/" + id);
+            return "vehicles/form";
+        }
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "Vehicle updated.");
+        return "redirect:/vehicles";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteVehicle(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            vehicleService.deleteVehicle(id);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "Vehicle deleted.");
+        } catch (ResponseStatusException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage", exception.getReason());
+        }
+        return "redirect:/vehicles";
+    }
+}

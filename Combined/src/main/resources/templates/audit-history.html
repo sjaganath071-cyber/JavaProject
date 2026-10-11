@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit History | Defense Logistics</title>
+
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/audit-history.css}">
+
+    <script th:src="@{/js/common.js}" defer></script>
+</head>
+<body>
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <main class="page-content audit-history-page">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <div class="page-heading">
+                <div>
+                    <h1>Audit History</h1>
+                    <p class="page-description">
+                        Review available records of significant system activities and administrative actions.
+                    </p>
+                </div>
+            </div>
+
+            <div th:if="${auditError == null}" class="audit-summary">
+                <div class="audit-summary-card">
+                    <h3>Total Records</h3>
+                    <p class="summary-value" th:text="${totalAuditRecords}">0</p>
+                </div>
+                <div class="audit-summary-card">
+                    <h3>Most Recent</h3>
+                    <p class="summary-value" th:text="${latestAuditTimestamp}">N/A</p>
+                </div>
+                <div class="audit-summary-card">
+                    <h3>Categories</h3>
+                    <p class="summary-value" th:text="${distinctAuditCategories > 0 ? distinctAuditCategories : 'N/A'}">N/A</p>
+                </div>
+            </div>
+
+            <section class="page-section audit-panel" th:if="${auditError == null}">
+                <div th:if="${#lists.isEmpty(auditRecords)}" class="empty-state">
+                    <h3>No audit records are available.</h3>
+                </div>
+
+                <div class="table-container" th:unless="${#lists.isEmpty(auditRecords)}">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Record ID</th>
+                                <th>Timestamp</th>
+                                <th>Actor</th>
+                                <th>Action</th>
+                                <th>Module</th>
+                                <th>Resource</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="record : ${auditRecords}">
+                                <td th:text="${record.id}">-</td>
+                                <td th:text="${#temporals.format(record.timestamp, 'MMM dd, yyyy HH:mm')}">-</td>
+                                <td th:text="${record.actor != null ? record.actor : 'System'}">-</td>
+                                <td th:text="${record.action != null ? record.action : 'Unknown'}">-</td>
+                                <td th:text="${record.module != null ? record.module : 'General'}">-</td>
+                                <td th:text="${record.resourceId != null ? record.resourceId : 'N/A'}">-</td>
+                                <td>
+                                    <span class="status-badge audit-record-status"
+                                          th:classappend="${record.status != null and #strings.equalsIgnoreCase(record.status, 'SUCCESS')} ? ' status-approved' : ' status-neutral'"
+                                          th:text="${record.status != null ? record.status : 'Unknown'}">Unknown</span>
+                                </td>
+                                <td class="audit-details" th:text="${record.details != null ? record.details : 'No additional details.'}">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div th:if="${auditError != null}" class="error-state">
+                <h2>Audit history unavailable</h2>
+                <p th:text="${auditError}">The audit history service is currently unavailable.</p>
+                <a class="btn btn-primary" th:href="@{/audit-history}">Retry</a>
+            </div>
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Management | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/vehicles.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="brand" th:href="@{/dashboard}">
+        <span class="brand-mark">DL</span>
+        <span>Defense Logistics</span>
+    </a>
+
+    <nav class="topnav">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <a th:href="@{/personnel}">Personnel</a>
+        <a th:href="@{/assets}">Assets</a>
+        <a class="active" th:href="@{/vehicles}">Vehicles</a>
+        <a th:href="@{/reports/readiness}">Readiness Reports</a>
+        <a th:href="@{/notifications}">Notifications</a>
+        <a th:href="@{/audit-history}">Audit History</a>
+    </nav>
+</header>
+
+<main class="page-container">
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">TRANSPORT RESOURCE MANAGEMENT</p>
+            <h1>Vehicle Management</h1>
+            <p class="page-description">
+                Manage vehicle records, locations, conditions and operational status.
+            </p>
+        </div>
+
+        <a class="button button-primary" th:href="@{/vehicles/new}">
+            + Register Vehicle
+        </a>
+    </div>
+
+    <div class="alert alert-success"
+         th:if="${successMessage != null}"
+         th:text="${successMessage}"></div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage != null}"
+         th:text="${errorMessage}"></div>
+
+    <section class="panel">
+        <form class="filter-form" method="get" th:action="@{/vehicles}">
+
+            <div class="form-group">
+                <label for="keyword">Search vehicles</label>
+                <input id="keyword"
+                       name="keyword"
+                       type="text"
+                       placeholder="Vehicle code, name, unit or location"
+                       th:value="${keyword}">
+            </div>
+
+            <div class="form-group">
+                <label for="type">Vehicle type</label>
+                <select id="type" name="type">
+                    <option value="">All types</option>
+                    <option th:each="vehicleType : ${vehicleTypes}"
+                            th:value="${vehicleType}"
+                            th:text="${vehicleType}"
+                            th:selected="${vehicleType == type}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Operational status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option value="AVAILABLE"
+                            th:selected="${status == 'AVAILABLE'}">
+                        Available
+                    </option>
+                    <option value="ALLOCATED"
+                            th:selected="${status == 'ALLOCATED'}">
+                        Allocated
+                    </option>
+                    <option value="IN_MAINTENANCE"
+                            th:selected="${status == 'IN_MAINTENANCE'}">
+                        In Maintenance
+                    </option>
+                    <option value="UNAVAILABLE"
+                            th:selected="${status == 'UNAVAILABLE'}">
+                        Unavailable
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button class="button button-primary" type="submit">
+                    Apply Filters
+                </button>
+
+                <a class="button button-secondary" th:href="@{/vehicles}">
+                    Clear
+                </a>
+            </div>
+
+        </form>
+    </section>
+
+    <section class="panel">
+
+        <div class="section-heading">
+            <div>
+                <h2>Vehicle Records</h2>
+                <p class="muted">Vehicle information returned by the backend.</p>
+            </div>
+
+            <span class="record-count"
+                  th:text="${vehicleList.size()} + ' records'">
+                0 records
+            </span>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Vehicle Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Assigned Unit</th>
+                    <th>Location</th>
+                    <th>Condition</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="vehicle : ${vehicleList}">
+                    <td class="code-cell"
+                        th:text="${vehicle.vehicleCode}">VEH-001</td>
+
+                    <td class="name-cell"
+                        th:text="${vehicle.name}">Transport Vehicle</td>
+
+                    <td th:text="${vehicle.type}">Transport</td>
+                    <td th:text="${vehicle.unit}">Unit Alpha</td>
+                    <td th:text="${vehicle.location}">Base A</td>
+                    <td th:text="${vehicle.condition}">GOOD</td>
+
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${vehicle.status == 'AVAILABLE'} ?
+                                  ' status-available' :
+                                  (${vehicle.status == 'ALLOCATED'} ?
+                                  ' status-allocated' :
+                                  (${vehicle.status == 'IN_MAINTENANCE'} ?
+                                  ' status-maintenance' : ' status-unavailable'))"
+                              th:text="${vehicle.status}">
+                            AVAILABLE
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="table-actions">
+                            <a class="action-link"
+                               th:href="@{/vehicles/{id}(id=${vehicle.id})}">
+                                View
+                            </a>
+
+                            <a class="action-link"
+                               th:href="@{/vehicles/{id}/edit(id=${vehicle.id})}">
+                                Edit
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(vehicleList)}">
+                    <td colspan="8" class="empty-state">
+                        No vehicle records found.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+    <a class="back-link" th:href="@{/dashboard}">
+        ← Back to Dashboard
+    </a>
+
+</main>
+
+<footer class="footer">
+    Defense Logistics &amp; Resource Management
+</footer>
+
+</body>
+</html>

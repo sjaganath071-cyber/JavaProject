@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Approval | Defense Logistics</title>
+</head>
+<body>
+<main>
+    <a href="/approvals">Back to Approvals</a>
+    <h1>Record Approval Decision</h1>
+
+    <p th:if="${#lists.isEmpty(pendingRequests)}">
+        No pending requests are available for approval.
+    </p>
+
+    <form th:if="${!#lists.isEmpty(pendingRequests)}"
+          th:action="@{/approvals}" th:object="${approval}" method="post">
+        <div th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+
+        <p>
+            <label for="requestId">Pending request</label>
+            <select id="requestId" th:field="*{requestId}" required>
+                <option value="">Select a request</option>
+                <option th:each="request : ${pendingRequests}"
+                        th:value="${request.id}"
+                        th:text="|${request.id} - ${request.requesterName} (${request.resourceType})|"></option>
+            </select>
+            <span th:if="${#fields.hasErrors('requestId')}"
+                  th:errors="*{requestId}"></span>
+        </p>
+
+        <p>
+            <label for="approverName">Approver name</label>
+            <input id="approverName" type="text" th:field="*{approverName}" required>
+            <span th:if="${#fields.hasErrors('approverName')}"
+                  th:errors="*{approverName}"></span>
+        </p>
+
+        <p>
+            <label for="decision">Decision</label>
+            <select id="decision" th:field="*{decision}" required>
+                <option value="">Select a decision</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+            <span th:if="${#fields.hasErrors('decision')}"
+                  th:errors="*{decision}"></span>
+        </p>
+
+        <p>
+            <label for="comments">Comments (optional)</label>
+            <textarea id="comments" th:field="*{comments}"></textarea>
+            <span th:if="${#fields.hasErrors('comments')}"
+                  th:errors="*{comments}"></span>
+        </p>
+
+        <button type="submit">Submit decision</button>
+        <a href="/approvals">Cancel</a>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Details | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/maintenance.css}">
+</head>
+<body>
+
+<div class="maintenance-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">MAINTENANCE OPERATIONS</p>
+            <h1>Maintenance Details</h1>
+            <p class="subtitle">
+                Review the maintenance record and its current status.
+            </p>
+        </div>
+
+        <div class="header-actions">
+            <a class="button button-secondary" th:href="@{/maintenance}">
+                Back to Maintenance
+            </a>
+
+            <a class="button button-primary"
+               th:href="@{/maintenance/{id}/edit(id=${maintenance.id})}">
+                Edit Record
+            </a>
+        </div>
+    </header>
+
+    <section class="content-card details-card">
+
+        <div class="details-heading">
+            <div>
+                <span class="eyebrow">MAINTENANCE REFERENCE</span>
+                <h2 th:text="${maintenance.maintenanceCode}">
+                    MNT-1001
+                </h2>
+                <p class="subtitle"
+                   th:text="${maintenance.description}">
+                    Maintenance description
+                </p>
+            </div>
+
+            <span class="status-badge"
+                  th:classappend="${maintenance.status == 'COMPLETED'}
+                      ? ' status-success'
+                      : (${maintenance.status == 'IN_PROGRESS'}
+                      ? ' status-progress'
+                      : (${maintenance.status == 'CANCELLED'}
+                      ? ' status-danger' : ' status-warning'))"
+                  th:text="${maintenance.status}">
+                SCHEDULED
+            </span>
+        </div>
+
+        <div class="maintenance-highlight-grid">
+
+            <div class="highlight-card">
+                <span>Resource Code</span>
+                <strong th:text="${maintenance.resourceCode}">
+                    EQ-1001
+                </strong>
+                <small th:text="${maintenance.resourceType}">
+                    EQUIPMENT
+                </small>
+            </div>
+
+            <div class="highlight-card">
+                <span>Maintenance Type</span>
+                <strong th:text="${maintenance.maintenanceType}">
+                    PREVENTIVE
+                </strong>
+            </div>
+
+            <div class="highlight-card">
+                <span>Estimated Cost</span>
+                <strong th:text="${maintenance.estimatedCost != null
+                    ? maintenance.estimatedCost : 'N/A'}">
+                    0.00
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="details-grid">
+
+            <div class="detail-item">
+                <span>Maintenance Reference</span>
+                <strong th:text="${maintenance.maintenanceCode}">
+                    MNT-1001
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Resource Code</span>
+                <strong th:text="${maintenance.resourceCode}">
+                    EQ-1001
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Resource Type</span>
+                <strong th:text="${maintenance.resourceType}">
+                    EQUIPMENT
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Maintenance Type</span>
+                <strong th:text="${maintenance.maintenanceType}">
+                    PREVENTIVE
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Scheduled Date</span>
+                <strong th:text="${maintenance.scheduledDate}">
+                    2026-10-10
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Completion Date</span>
+                <strong th:text="${maintenance.completionDate != null
+                    ? maintenance.completionDate : 'Not completed'}">
+                    Not completed
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Assigned Technician</span>
+                <strong th:text="${maintenance.assignedTechnician != null
+                    and !maintenance.assignedTechnician.isBlank()
+                    ? maintenance.assignedTechnician : 'Unassigned'}">
+                    Unassigned
+                </strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Estimated Cost</span>
+                <strong th:text="${maintenance.estimatedCost != null
+                    ? maintenance.estimatedCost : 'N/A'}">
+                    0.00
+                </strong>
+            </div>
+
+            <div class="detail-item full-width">
+                <span>Description</span>
+                <strong th:text="${maintenance.description}">
+                    Maintenance description
+                </strong>
+            </div>
+
+            <div class="detail-item full-width">
+                <span>Additional Notes</span>
+                <strong th:text="${maintenance.notes != null
+                    and !maintenance.notes.isBlank()
+                    ? maintenance.notes : 'No additional notes'}">
+                    No additional notes
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="details-footer">
+            <a class="button button-secondary"
+               th:href="@{/maintenance}">
+                Return to Maintenance
+            </a>
+
+            <a class="button button-primary"
+               th:href="@{/maintenance/{id}/edit(id=${maintenance.id})}">
+                Edit Maintenance Record
+            </a>
+        </div>
+
+    </section>
+
+</div>
+
+</body>
+</html>

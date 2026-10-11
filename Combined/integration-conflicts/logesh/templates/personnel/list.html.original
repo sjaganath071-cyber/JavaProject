@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Management</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #203b33;
+        }
+
+        .actions,
+        .row-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .actions a,
+        .row-actions a,
+        button {
+            color: #203b33;
+        }
+
+        .add-link {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 4px;
+            color: white !important;
+            background: #203b33;
+            text-decoration: none;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 850px;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            color: white;
+            background: #203b33;
+        }
+
+        button {
+            padding: 0;
+            border: 0;
+            background: none;
+            font: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-left: 4px solid #218838;
+            background: #edf6ef;
+        }
+
+        .error {
+            border-color: #c82333;
+            background: #fff0f1;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/">Back to Dashboard</a>
+    <h1>Personnel Management</h1>
+
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+    <div class="actions">
+        <a class="add-link" href="/personnel/new">Add Personnel</a>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>Personnel ID</th>
+                <th>Full Name</th>
+                <th>Rank</th>
+                <th>Department</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="person : ${personnelList}">
+                <td th:text="${person.personnelId}"></td>
+                <td th:text="${person.fullName}"></td>
+                <td th:text="${person.rank}"></td>
+                <td th:text="${person.department}"></td>
+                <td th:text="${person.phone}"></td>
+                <td th:text="${person.email}"></td>
+                <td th:text="${person.status}"></td>
+                <td>
+                    <div class="row-actions">
+                        <a th:href="@{/personnel/edit/{id}(id=${person.id})}">Edit</a>
+                        <form th:action="@{/personnel/delete/{id}(id=${person.id})}"
+                              method="post">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(personnelList)}">
+                <td colspan="8">No personnel records available.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

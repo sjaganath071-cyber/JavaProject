@@ -1,0 +1,101 @@
+package com.team11.defense_logistics.model;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import java.time.LocalDateTime;
+
+public class ResourceAllocation {
+
+    private Long id;
+
+    @NotNull(message = "Request ID is required")
+    @Positive(message = "Request ID must be positive")
+    private Long requestId;
+
+    @NotNull(message = "Vehicle ID is required")
+    @Positive(message = "Vehicle ID must be positive")
+    private Long vehicleId;
+
+    @NotBlank(message = "Resource name is required")
+    private String resourceName;
+
+    @NotBlank(message = "Allocated-to value is required")
+    private String allocatedTo;
+
+    @Pattern(regexp = "^(Allocated|Released|Cancelled)$",
+            message = "Status must be Allocated, Released, or Cancelled")
+    private String status = "Allocated";
+
+    private LocalDateTime allocationDate;
+    private LocalDateTime releaseDate;
+
+    public ResourceAllocation() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
+    }
+
+    public Long getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(Long vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public String getResourceName() {
+        return resourceName;
+    }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
+    public String getAllocatedTo() {
+        return allocatedTo;
+    }
+
+    public void setAllocatedTo(String allocatedTo) {
+        this.allocatedTo = allocatedTo;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getAllocationDate() {
+        return allocationDate;
+    }
+
+    public void setAllocationDate(LocalDateTime allocationDate) {
+        this.allocationDate = allocationDate;
+    }
+
+    public LocalDateTime getReleaseDate() {
+        return releaseDate;
+    }
+
+    public void setReleaseDate(LocalDateTime releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' | Defense Logistics'">
+        Asset Form
+    </title>
+    <link rel="stylesheet" th:href="@{/css/assets.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="brand" th:href="@{/dashboard}">
+        <span class="brand-mark">DL</span>
+        <span>Defense Logistics</span>
+    </a>
+
+    <nav class="topnav">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <a th:href="@{/personnel}">Personnel</a>
+        <a class="active" th:href="@{/assets}">Assets</a>
+        <a th:href="@{/reports/readiness}">Readiness Reports</a>
+        <a th:href="@{/notifications}">Notifications</a>
+        <a th:href="@{/audit-history}">Audit History</a>
+    </nav>
+</header>
+
+<main class="page-container narrow-container">
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">ASSET RECORDS</p>
+            <h1 th:text="${pageTitle}">Add Asset</h1>
+            <p class="page-description">
+                Enter the equipment or asset information.
+            </p>
+        </div>
+    </div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage != null}"
+         th:text="${errorMessage}"></div>
+
+    <section class="panel">
+
+        <form method="post"
+              th:action="${formAction}"
+              th:object="${asset}">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="assetTag">Asset Tag *</label>
+                    <input id="assetTag"
+                           type="text"
+                           th:field="*{assetTag}"
+                           maxlength="50"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{assetTag}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Asset Name *</label>
+                    <input id="name"
+                           type="text"
+                           th:field="*{name}"
+                           maxlength="100"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{name}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <input id="category"
+                           type="text"
+                           th:field="*{category}"
+                           maxlength="100"
+                           placeholder="Enter asset category"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{category}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="unit">Assigned Unit *</label>
+                    <input id="unit"
+                           type="text"
+                           th:field="*{unit}"
+                           maxlength="100"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{unit}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location *</label>
+                    <input id="location"
+                           type="text"
+                           th:field="*{location}"
+                           maxlength="150"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{location}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="condition">Condition *</label>
+                    <select id="condition" th:field="*{condition}" required>
+                        <option value="">Select condition</option>
+                        <option value="EXCELLENT">Excellent</option>
+                        <option value="GOOD">Good</option>
+                        <option value="FAIR">Fair</option>
+                        <option value="POOR">Poor</option>
+                        <option value="DAMAGED">Damaged</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{condition}"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status *</label>
+                    <select id="status" th:field="*{status}" required>
+                        <option value="">Select status</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="ALLOCATED">Allocated</option>
+                        <option value="IN_MAINTENANCE">In Maintenance</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{status}"></small>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button class="button button-primary" type="submit">
+                    <span th:text="${formMode == 'edit'} ?
+                        'Save Changes' : 'Create Asset'">
+                        Create Asset
+                    </span>
+                </button>
+
+                <a class="button button-secondary" th:href="@{/assets}">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    Defense Logistics &amp; Resource Management
+</footer>
+
+</body>
+</html>

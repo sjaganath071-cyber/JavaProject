@@ -1,0 +1,177 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Inventory;
+import com.team11.defense_logistics.model.ResourceAllocation;
+import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Objects;
+
+@Service
+public class InventoryService {
+
+    private final List<Inventory> inventoryItems = new ArrayList<>(
+        List.of(
+            new Inventory(1L, "Medical Kit", "Medical",
+                    100, "kits", "Available"),
+            new Inventory(2L, "Engine Oil", "Vehicle Parts",
+                    8, "litres", "Low Stock"),
+            new Inventory(3L, "Food Pack", "Rations",
+                    250, "packs", "Available"),
+            new Inventory(4L, "Spare Tyre", "Vehicle Parts",
+                    0, "units", "Out of Stock")
+        )
+    );
+
+    private final ResourceAllocationService allocationService;
+    private Long nextId = 5L;
+
+    public InventoryService(ResourceAllocationService allocationService) {
+        this.allocationService = allocationService;
+    }
+
+    public synchronized List<Inventory> getAllItems() {
+        return new ArrayList<>(inventoryItems);
+    }
+
+    public synchronized Optional<Inventory> getItemById(Long id) {
+        return inventoryItems.stream()
+                .filter(item -> item.getId().equals(id))
+                .findFirst();
+    }
+
+    public synchronized List<Inventory> getLowStockItems() {
+        return inventoryItems.stream()
+                .filter(item -> item.getQuantity() <= 10)
+                .toList();
+    }
+
+    public synchronized Inventory createItem(Inventory item) {
+        validateItem(item);
+        item.setItemCode(item.getItemCode().trim());
+        ensureUniqueItemCode(item.getItemCode(), null);
+        item.setItemName(item.getItemName().trim());
+        item.setCategory(item.getCategory().trim());
+        item.setUnit(item.getUnit().trim());
+        item.setId(nextId++);
+        updateStatus(item);
+        inventoryItems.add(item);
+        return item;
+    }
+
+    public synchronized Inventory updateItem(
+            Long id, Inventory updatedItem) {
+
+        Inventory existing = findOrThrow(id);
+        if (updatedItem == null) {
+            throw new IllegalArgumentException("Inventory item details are required");
+        }
+
+        Inventory candidate = new Inventory(
+            existing.getId(),
+            updatedItem.getItemCode() == null
+                ? existing.getItemCode() : updatedItem.getItemCode(),
+            updatedItem.getItemName() == null
+                ? existing.getItemName() : updatedItem.getItemName(),
+            updatedItem.getCategory() == null
+                ? existing.getCategory() : updatedItem.getCategory(),
+            updatedItem.getQuantity(),
+            updatedItem.getUnit() == null
+                ? existing.getUnit() : updatedItem.getUnit(),
+            existing.getStatus());
+        validateItem(candidate);
+        candidate.setItemCode(candidate.getItemCode().trim());
+        candidate.setItemName(candidate.getItemName().trim());
+        candidate.setCategory(candidate.getCategory().trim());
+        candidate.setUnit(candidate.getUnit().trim());
+        ensureUniqueItemCode(candidate.getItemCode(), id);
+
+        existing.setItemCode(candidate.getItemCode());
+        existing.setItemName(candidate.getItemName());
+        existing.setCategory(candidate.getCategory());
+        existing.setQuantity(candidate.getQuantity());
+        existing.setUnit(candidate.getUnit());
+
+        updateStatus(existing);
+        return existing;
+    }
+
+    public synchronized Inventory updateQuantity(
+            Long id, int quantity) {
+
+        if (quantity < 0) {
+            throw new IllegalArgumentException(
+                    "Quantity cannot be negative");
+        }
+
+        Inventory item = findOrThrow(id);
+        item.setQuantity(quantity);
+        updateStatus(item);
+        return item;
+    }
+
+    public synchronized void deleteItem(Long id) {
+        Inventory item = findOrThrow(id);
+        boolean activelyAllocated = allocationService.findAll().stream()
+            .filter(allocation -> "Allocated".equalsIgnoreCase(allocation.getStatus()))
+            .map(ResourceAllocation::getResourceName)
+            .filter(Objects::nonNull)
+            .anyMatch(resourceName -> resourceName.equalsIgnoreCase(item.getItemCode())
+                || resourceName.equalsIgnoreCase(item.getItemName()));
+        if (activelyAllocated) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Inventory item is referenced by an active allocation");
+        }
+        inventoryItems.remove(item);
+    }
+
+    private Inventory findOrThrow(Long id) {
+        return getItemById(id).orElseThrow(
+                () -> new IllegalArgumentException(
+                        "Inventory item not found: " + id));
+    }
+
+    private void validateItem(Inventory item) {
+        if (item == null
+                || item.getItemCode() == null
+                || item.getItemCode().isBlank()
+                || item.getItemName() == null
+                || item.getItemName().isBlank()
+                || item.getCategory() == null
+                || item.getCategory().isBlank()
+                || item.getUnit() == null
+                || item.getUnit().isBlank()) {
+            throw new IllegalArgumentException(
+                    "Item name, category and unit are required");
+        }
+
+        if (item.getQuantity() < 0) {
+            throw new IllegalArgumentException(
+                    "Quantity cannot be negative");
+        }
+    }
+
+    private void ensureUniqueItemCode(String itemCode, Long excludedId) {
+        boolean duplicate = inventoryItems.stream()
+                .anyMatch(item -> !Objects.equals(item.getId(), excludedId)
+                        && item.getItemCode().equalsIgnoreCase(itemCode));
+        if (duplicate) {
+            throw new IllegalArgumentException("Item code already exists");
+        }
+    }
+
+    private void updateStatus(Inventory item) {
+        if (item.getQuantity() == 0) {
+            item.setStatus("Out of Stock");
+        } else if (item.getQuantity() <= 10) {
+            item.setStatus("Low Stock");
+        } else {
+            item.setStatus("Available");
+        }
+    }
+}

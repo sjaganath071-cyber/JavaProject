@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/logistics-requests.css}">
+</head>
+<body>
+<div class="lr-page">
+
+    <header class="lr-page-header">
+        <div>
+            <div class="lr-breadcrumb">
+                Operations / Resource Management / Logistics Requests
+            </div>
+            <h1>Request Details</h1>
+            <p>Review the request, its priority, and resource assignment.</p>
+        </div>
+
+        <div class="lr-header-actions">
+            <a class="lr-button lr-button-secondary"
+               th:href="@{/logistics-requests}">Back to Requests</a>
+
+            <a class="lr-button lr-button-primary"
+               th:href="@{/logistics-requests/{id}/edit(id=${request.id})}">
+                Edit Request
+            </a>
+        </div>
+    </header>
+
+    <section class="lr-panel lr-details-panel">
+
+        <div class="lr-details-heading">
+            <div>
+                <span class="lr-overline">Request Code</span>
+                <h2 th:text="${request.requestCode}">REQ-2026-001</h2>
+                <p th:text="${request.requestingUnit}">Operations Unit</p>
+            </div>
+
+            <div class="lr-details-badges">
+                <span class="lr-badge"
+                      th:classappend="${' lr-priority-' + #strings.toLowerCase(request.priority)}"
+                      th:text="${request.priority}">MEDIUM</span>
+
+                <span class="lr-badge"
+                      th:classappend="${' lr-status-' + #strings.toLowerCase(request.status)}"
+                      th:text="${request.status}">PENDING</span>
+            </div>
+        </div>
+
+        <div class="lr-detail-grid">
+
+            <div class="lr-detail-item">
+                <span>Request Type</span>
+                <strong th:text="${request.requestType}">EQUIPMENT</strong>
+            </div>
+
+            <div class="lr-detail-item">
+                <span>Requested Date</span>
+                <strong th:text="${request.requestedDate != null ? #temporals.format(request.requestedDate, 'dd MMM yyyy') : '—'}">10 Oct 2026</strong>
+            </div>
+
+            <div class="lr-detail-item">
+                <span>Required By</span>
+                <strong th:text="${request.requiredByDate != null ? #temporals.format(request.requiredByDate, 'dd MMM yyyy') : '—'}">15 Oct 2026</strong>
+            </div>
+
+            <div class="lr-detail-item">
+                <span>Assigned Resource</span>
+                <strong th:text="${request.assignedResource != null and !#strings.isEmpty(request.assignedResource) ? request.assignedResource : 'Not assigned'}">Not assigned</strong>
+            </div>
+
+        </div>
+
+        <div class="lr-description-block">
+            <h3>Request Description</h3>
+            <p class="lr-preserve-whitespace"
+               th:text="${request.description}">Request description.</p>
+        </div>
+
+        <div class="lr-description-block">
+            <h3>Additional Notes</h3>
+            <p class="lr-preserve-whitespace"
+               th:text="${request.notes != null and !#strings.isEmpty(request.notes) ? request.notes : 'No additional notes provided.'}">
+                No additional notes provided.
+            </p>
+        </div>
+
+        <div class="lr-details-footer">
+            <span>Request ID</span>
+            <strong th:text="${request.id}">1</strong>
+        </div>
+
+    </section>
+
+</div>
+</body>
+</html>

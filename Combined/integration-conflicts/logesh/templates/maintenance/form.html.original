@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Record</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+        .container {
+            max-width: 720px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 { color: #203b33; }
+        .field { margin: 16px 0; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #aebbb4;
+            border-radius: 4px;
+            font: inherit;
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        .field-error, .global-errors { color: #b42332; }
+        .form-actions { display: flex; gap: 16px; margin-top: 24px; }
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            color: white;
+            background: #203b33;
+            font: inherit;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .container { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/maintenance">Back to Maintenance</a>
+    <h1 th:text="${maintenance.id == null ? 'Add Maintenance' : 'Edit Maintenance'}">Maintenance Record</h1>
+    <form th:action="${formAction}" th:object="${maintenance}" method="post">
+        <div class="global-errors" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+        <div class="field">
+            <label for="vehicleId">Vehicle</label>
+            <select id="vehicleId" th:field="*{vehicleId}" required>
+                <option value="">Select a vehicle</option>
+                <option th:each="vehicle : ${vehicles}"
+                        th:value="${vehicle.id}"
+                        th:text="${vehicle.vehicleNumber + ' - ' + vehicle.type}"></option>
+            </select>
+            <p class="field-error" th:if="${#fields.hasErrors('vehicleId')}"
+               th:errors="*{vehicleId}"></p>
+        </div>
+        <div class="field">
+            <label for="maintenanceType">Maintenance Type</label>
+            <input id="maintenanceType" type="text"
+                   th:field="*{maintenanceType}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('maintenanceType')}"
+               th:errors="*{maintenanceType}"></p>
+        </div>
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" th:field="*{description}" required></textarea>
+            <p class="field-error" th:if="${#fields.hasErrors('description')}"
+               th:errors="*{description}"></p>
+        </div>
+        <div class="field">
+            <label for="scheduledDate">Scheduled Date</label>
+            <input id="scheduledDate" type="date"
+                   th:field="*{scheduledDate}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('scheduledDate')}"
+               th:errors="*{scheduledDate}"></p>
+        </div>
+        <div class="field">
+            <label for="cost">Cost</label>
+            <input id="cost" type="number" min="0" step="0.01"
+                   th:field="*{cost}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('cost')}"
+               th:errors="*{cost}"></p>
+        </div>
+        <div class="field" th:if="${maintenance.id != null}">
+            <label for="status">Current Status</label>
+            <input id="status" type="text" th:field="*{status}" readonly>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a href="/maintenance">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

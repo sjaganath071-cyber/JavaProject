@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Approvals Management | Defense Logistics</title>
+</head>
+<body>
+    <h1>Approvals Management</h1>
+    <nav>
+        <a href="/">Dashboard</a> |
+        <a href="/requests">Logistics Requests</a>
+    </nav>
+    <p th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p th:if="${!#lists.isEmpty(pendingRequests)}">
+        <a href="/approvals/new">Record an approval decision</a>
+    </p>
+    <p th:if="${#lists.isEmpty(pendingRequests)}">No pending requests are available for approval.</p>
+    <p th:if="${#lists.isEmpty(approvals)}">No approval decisions recorded yet.</p>
+    <table border="1" cellpadding="8" th:if="${!#lists.isEmpty(approvals)}">
+        <thead>
+        <tr><th>ID</th><th>Request ID</th><th>Approver</th><th>Decision</th><th>Comments</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="a : ${approvals}">
+            <td th:text="${a.id}"></td>
+            <td th:text="${a.requestId}"></td>
+            <td th:text="${a.approverName}"></td>
+            <td th:text="${a.decision}"></td>
+            <td th:text="${a.comments}"></td>
+            <td th:text="${a.decisionDate}"></td>
+        </tr>
+        </tbody>
+    </table>
+</body>
+</html>

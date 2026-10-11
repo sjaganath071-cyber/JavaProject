@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Maintenance</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #203b33;
+        }
+
+        .back {
+            color: #203b33;
+            text-decoration: none;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 950px;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #203b33;
+            color: white;
+        }
+
+        .pending {
+            color: #b77900;
+            font-weight: bold;
+        }
+
+        .progress {
+            color: #1769aa;
+            font-weight: bold;
+        }
+
+        .completed {
+            color: #218838;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-left: 4px solid #218838;
+            background: #edf6ef;
+        }
+
+        .error {
+            border-color: #c82333;
+            background: #fff0f1;
+        }
+
+        .row-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        button, select {
+            font: inherit;
+        }
+
+        button {
+            padding: 0;
+            border: 0;
+            color: #203b33;
+            background: none;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a class="back" href="/dashboard">← Back to Dashboard</a>
+
+    <h1>Maintenance Management</h1>
+    <p>Track maintenance schedules, repair costs, and completion status.</p>
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p><a href="/maintenance/new">Add Maintenance</a></p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Vehicle ID</th>
+                <th>Maintenance Type</th>
+                <th>Description</th>
+                <th>Scheduled Date</th>
+                <th>Completed Date</th>
+                <th>Cost</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="record : ${maintenanceRecords}">
+                <td th:text="${record.id}"></td>
+                <td th:text="${record.vehicleId}"></td>
+                <td th:text="${record.maintenanceType}"></td>
+                <td th:text="${record.description}"></td>
+                <td th:text="${record.scheduledDate}"></td>
+                <td th:text="${record.completedDate != null ? record.completedDate : '-'}"></td>
+                <td th:text="${record.cost}"></td>
+                <td>
+                    <span
+                        th:text="${record.status}"
+                        th:class="${record.status == 'Completed' ? 'completed' :
+                            (record.status == 'In Progress' ? 'progress' : 'pending')}">
+                    </span>
+                </td>
+                <td>
+                    <div class="row-actions" th:if="${record.status != 'Completed'}">
+                        <a th:href="@{/maintenance/edit/{id}(id=${record.id})}">Edit</a>
+                        <form th:action="@{/maintenance/delete/{id}(id=${record.id})}"
+                              method="post">
+                            <button type="submit">Delete</button>
+                        </form>
+                        <form th:action="@{/maintenance/status/{id}(id=${record.id})}"
+                              method="post">
+                            <select name="status" aria-label="New maintenance status">
+                            <option th:if="${record.status == 'Pending'}"
+                                value="In Progress">In Progress</option>
+                            <option th:if="${record.status == 'In Progress'}"
+                                value="Completed">Completed</option>
+                            </select>
+                            <button type="submit">Update status</button>
+                        </form>
+                    </div>
+                    <span th:if="${record.status == 'Completed'}">Completed</span>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(maintenanceRecords)}">
+                <td colspan="9">No maintenance records available.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

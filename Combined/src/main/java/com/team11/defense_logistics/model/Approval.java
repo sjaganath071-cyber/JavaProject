@@ -1,0 +1,79 @@
+package com.team11.defense_logistics.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+public class Approval {
+
+    private Long id;
+
+    @NotNull(message = "Request ID is required")
+    @Positive(message = "Request ID must be positive")
+    private Long requestId;
+
+    @NotBlank(message = "Approver name is required")
+    private String approverName;
+
+    @NotBlank(message = "Decision is required")
+    @Pattern(regexp = "(?i)^(Approved|Rejected)$",
+            message = "Decision must be Approved or Rejected")
+    private String decision;
+
+    private String comments;
+    private LocalDateTime decisionDate;
+
+    public Approval() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
+    }
+
+    public String getApproverName() {
+        return approverName;
+    }
+
+    public void setApproverName(String approverName) {
+        this.approverName = approverName;
+    }
+
+    public String getDecision() {
+        return decision;
+    }
+
+    public void setDecision(String decision) {
+        this.decision = decision;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
+    public LocalDateTime getDecisionDate() {
+        return decisionDate;
+    }
+
+    public void setDecisionDate(LocalDateTime decisionDate) {
+        this.decisionDate = decisionDate;
+    }
+}

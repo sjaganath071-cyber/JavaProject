@@ -1,0 +1,230 @@
+
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Vehicle;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class VehicleService {
+
+    private static final List<String> VALID_STATUSES = List.of(
+            "Available", "Under Maintenance", "In Use");
+
+    private final List<Vehicle> vehicles = new ArrayList<>(List.of(
+            new Vehicle(1L, "TN01AB1234", "Truck", "Available"),
+            new Vehicle(2L, "TN01CD5678", "Jeep", "Under Maintenance"),
+            new Vehicle(3L, "TN01EF9012", "Van", "In Use")
+    ));
+
+    private final ObjectProvider<ResourceAllocationService> allocationService;
+    private final ObjectProvider<MovementService> movementService;
+    private final ObjectProvider<MaintenanceService> maintenanceService;
+    private Long nextId = 4L;
+
+    public VehicleService(
+            ObjectProvider<ResourceAllocationService> allocationService,
+            ObjectProvider<MovementService> movementService,
+            ObjectProvider<MaintenanceService> maintenanceService) {
+        this.allocationService = allocationService;
+        this.movementService = movementService;
+        this.maintenanceService = maintenanceService;
+    }
+
+    public List<Vehicle> getAllVehicles() {
+        return new ArrayList<>(vehicles);
+    }
+
+    public Optional<Vehicle> getVehicleById(Long id) {
+        return vehicles.stream()
+                .filter(v -> v.getId().equals(id))
+                .findFirst();
+    }
+
+    public Vehicle createVehicle(Vehicle vehicle) {
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Vehicle details are required");
+        }
+
+        if (vehicle.getStatus() == null || vehicle.getStatus().isBlank()) {
+            vehicle.setStatus("Available");
+        }
+        vehicle.setVehicleNumber(trimToNull(vehicle.getVehicleNumber()));
+        vehicle.setType(trimToNull(vehicle.getType()));
+        vehicle.setStatus(normalizeStatus(vehicle.getStatus()));
+        validateVehicle(vehicle);
+        ensureUniqueVehicleNumber(vehicle.getVehicleNumber(), null);
+
+        vehicle.setId(nextId++);
+        vehicles.add(vehicle);
+        return vehicle;
+    }
+
+    public Vehicle updateVehicle(Long id, Vehicle updated) {
+        Vehicle existing = findOrThrow(id);
+        if (updated == null) {
+            throw new IllegalArgumentException("Vehicle details are required");
+        }
+
+        Vehicle candidate = new Vehicle(
+                existing.getId(),
+                updated.getVehicleNumber() == null
+                        ? existing.getVehicleNumber() : updated.getVehicleNumber(),
+                updated.getType() == null ? existing.getType() : updated.getType(),
+                updated.getStatus() == null || updated.getStatus().isBlank()
+                        ? existing.getStatus() : updated.getStatus());
+        candidate.setVehicleNumber(trimToNull(candidate.getVehicleNumber()));
+        candidate.setType(trimToNull(candidate.getType()));
+        candidate.setStatus(normalizeStatus(candidate.getStatus()));
+        validateVehicle(candidate);
+        if ("Available".equals(candidate.getStatus())) {
+            ensureAvailableAllowed(existing);
+        }
+        ensureUniqueVehicleNumber(candidate.getVehicleNumber(), id);
+
+        existing.setVehicleNumber(candidate.getVehicleNumber());
+        existing.setType(candidate.getType());
+        existing.setStatus(candidate.getStatus());
+
+        return existing;
+    }
+
+    public void deleteVehicle(Long id) {
+        Vehicle vehicle = findOrThrow(id);
+        boolean allocated = allocationService.getObject().byVehicle(id).stream()
+                .anyMatch(allocation ->
+                        "Allocated".equalsIgnoreCase(allocation.getStatus()));
+        boolean moving = movementService.getObject().byVehicle(id).stream()
+                .anyMatch(movement -> "Scheduled".equalsIgnoreCase(movement.getStatus())
+                        || "In Transit".equalsIgnoreCase(movement.getStatus()));
+
+        if (allocated || moving) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Vehicle cannot be deleted while an active allocation or movement references it");
+        }
+
+        vehicles.remove(vehicle);
+    }
+
+    public Vehicle updateStatus(Long id, String status) {
+        Vehicle existing = findOrThrow(id);
+
+        if (status == null || !containsStatus(status)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Invalid vehicle status");
+        }
+
+        String normalizedStatus = normalizeStatus(status);
+        if ("Available".equals(normalizedStatus)) {
+            ensureAvailableAllowed(existing);
+        }
+
+        existing.setStatus(normalizedStatus);
+        return existing;
+    }
+
+    void reconcileAfterWorkChange(Long vehicleId) {
+        reconcileVehicleStatus(vehicleId, false);
+    }
+
+    void reconcileAfterMaintenanceChange(Long vehicleId) {
+        reconcileVehicleStatus(vehicleId, true);
+    }
+
+    private void reconcileVehicleStatus(
+            Long vehicleId, boolean maintenanceMayClear) {
+        Vehicle vehicle = findOrThrow(vehicleId);
+
+        if (hasActiveMaintenance(vehicleId)) {
+            vehicle.setStatus("Under Maintenance");
+        } else if (hasActiveAllocation(vehicleId) || hasActiveMovement(vehicleId)) {
+            vehicle.setStatus("In Use");
+        } else if (!maintenanceMayClear
+                && "Under Maintenance".equals(vehicle.getStatus())) {
+            return;
+        } else {
+            vehicle.setStatus("Available");
+        }
+    }
+
+    private void ensureAvailableAllowed(Vehicle vehicle) {
+        if ("Under Maintenance".equals(vehicle.getStatus())
+                || hasActiveMaintenance(vehicle.getId())
+                || hasActiveAllocation(vehicle.getId())
+                || hasActiveMovement(vehicle.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Vehicle cannot be marked Available while maintenance, allocation, or movement is active");
+        }
+    }
+
+    private boolean hasActiveAllocation(Long vehicleId) {
+        ResourceAllocationService service = allocationService.getIfAvailable();
+        return service != null && service.byVehicle(vehicleId).stream()
+                .anyMatch(allocation ->
+                        "Allocated".equalsIgnoreCase(allocation.getStatus()));
+    }
+
+    private boolean hasActiveMovement(Long vehicleId) {
+        MovementService service = movementService.getIfAvailable();
+        return service != null && service.byVehicle(vehicleId).stream()
+                .anyMatch(movement -> "Scheduled".equalsIgnoreCase(movement.getStatus())
+                        || "In Transit".equalsIgnoreCase(movement.getStatus()));
+    }
+
+    private boolean hasActiveMaintenance(Long vehicleId) {
+        MaintenanceService service = maintenanceService.getIfAvailable();
+        return service != null && service.getByVehicleId(vehicleId).stream()
+                .anyMatch(record -> "In Progress".equalsIgnoreCase(record.getStatus()));
+    }
+
+    private Vehicle findOrThrow(Long id) {
+        return getVehicleById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Vehicle not found"));
+    }
+
+    private void validateVehicle(Vehicle vehicle) {
+        if (vehicle.getVehicleNumber() == null
+                || vehicle.getVehicleNumber().isBlank()
+                || vehicle.getType() == null
+                || vehicle.getType().isBlank()) {
+            throw new IllegalArgumentException(
+                    "Vehicle number and type are required");
+        }
+        if (!containsStatus(vehicle.getStatus())) {
+            throw new IllegalArgumentException("Invalid vehicle status");
+        }
+    }
+
+    private void ensureUniqueVehicleNumber(String vehicleNumber, Long excludedId) {
+        boolean duplicate = vehicles.stream()
+                .anyMatch(vehicle -> !vehicle.getId().equals(excludedId)
+                        && vehicle.getVehicleNumber().equalsIgnoreCase(vehicleNumber));
+        if (duplicate) {
+            throw new IllegalArgumentException("Vehicle number already exists");
+        }
+    }
+
+    private boolean containsStatus(String status) {
+        return VALID_STATUSES.stream().anyMatch(value -> value.equalsIgnoreCase(status));
+    }
+
+    private String normalizeStatus(String status) {
+        return VALID_STATUSES.stream()
+                .filter(value -> value.equalsIgnoreCase(status))
+                .findFirst()
+                .orElse(status);
+    }
+
+    private String trimToNull(String value) {
+        return value == null ? null : value.trim();
+    }
+}

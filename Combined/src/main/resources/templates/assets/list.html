@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/assets.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="brand" th:href="@{/dashboard}">
+        <span class="brand-mark">DL</span>
+        <span>Defense Logistics</span>
+    </a>
+
+    <nav class="topnav">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <a th:href="@{/personnel}">Personnel</a>
+        <a class="active" th:href="@{/assets}">Assets</a>
+        <a th:href="@{/reports/readiness}">Readiness Reports</a>
+        <a th:href="@{/notifications}">Notifications</a>
+        <a th:href="@{/audit-history}">Audit History</a>
+    </nav>
+</header>
+
+<main class="page-container">
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">RESOURCE MANAGEMENT</p>
+            <h1>Equipment &amp; Asset Management</h1>
+            <p class="page-description">
+                Manage asset records, condition, category and location.
+            </p>
+        </div>
+
+        <a class="button button-primary" th:href="@{/assets/new}">
+            + Add Asset
+        </a>
+    </div>
+
+    <div class="alert alert-success"
+         th:if="${successMessage != null}"
+         th:text="${successMessage}"></div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage != null}"
+         th:text="${errorMessage}"></div>
+
+    <section class="panel">
+        <form class="filter-form" method="get" th:action="@{/assets}">
+
+            <div class="form-group search-group">
+                <label for="keyword">Search assets</label>
+                <input id="keyword"
+                       type="text"
+                       name="keyword"
+                       placeholder="Asset tag, name, unit or location"
+                       th:value="${keyword}">
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All categories</option>
+                    <option th:each="categoryOption : ${categories}"
+                            th:value="${categoryOption}"
+                            th:text="${categoryOption}"
+                            th:selected="${categoryOption == category}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option value="AVAILABLE"
+                            th:selected="${status == 'AVAILABLE'}">
+                        Available
+                    </option>
+                    <option value="ALLOCATED"
+                            th:selected="${status == 'ALLOCATED'}">
+                        Allocated
+                    </option>
+                    <option value="IN_MAINTENANCE"
+                            th:selected="${status == 'IN_MAINTENANCE'}">
+                        In Maintenance
+                    </option>
+                    <option value="UNAVAILABLE"
+                            th:selected="${status == 'UNAVAILABLE'}">
+                        Unavailable
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button class="button button-primary" type="submit">
+                    Apply Filters
+                </button>
+                <a class="button button-secondary" th:href="@{/assets}">
+                    Clear
+                </a>
+            </div>
+
+        </form>
+    </section>
+
+    <section class="panel">
+
+        <div class="section-heading">
+            <div>
+                <h2>Asset Records</h2>
+                <p class="muted">Records returned by the asset service.</p>
+            </div>
+
+            <span class="record-count"
+                  th:text="${assetList.size()} + ' records'">
+                0 records
+            </span>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Asset Tag</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Location</th>
+                    <th>Condition</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="asset : ${assetList}">
+                    <td class="code-cell"
+                        th:text="${asset.assetTag}">AST-001</td>
+                    <td class="name-cell"
+                        th:text="${asset.name}">Equipment</td>
+                    <td th:text="${asset.category}">Communications</td>
+                    <td th:text="${asset.unit}">Unit Alpha</td>
+                    <td th:text="${asset.location}">Warehouse A</td>
+                    <td th:text="${asset.condition}">GOOD</td>
+
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${asset.status == 'AVAILABLE'} ?
+                                  ' status-available' :
+                                  (${asset.status == 'ALLOCATED'} ?
+                                  ' status-allocated' :
+                                  (${asset.status == 'IN_MAINTENANCE'} ?
+                                  ' status-maintenance' : ' status-unavailable'))"
+                              th:text="${asset.status}">
+                            AVAILABLE
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="table-actions">
+                            <a class="action-link"
+                               th:href="@{/assets/{id}(id=${asset.id})}">
+                                View
+                            </a>
+
+                            <a class="action-link"
+                               th:href="@{/assets/{id}/edit(id=${asset.id})}">
+                                Edit
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(assetList)}">
+                    <td colspan="8" class="empty-state">
+                        No asset records found.
+                        Add an asset or change your filters.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+    <a class="back-link" th:href="@{/dashboard}">
+        ← Back to Dashboard
+    </a>
+
+</main>
+
+<footer class="footer">
+    Defense Logistics &amp; Resource Management
+</footer>
+
+</body>
+</html>

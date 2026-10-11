@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Defense Logistics</title>
+
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/notifications.css}">
+
+    <script th:src="@{/js/common.js}" defer></script>
+    <script th:src="@{/js/notifications.js}" defer></script>
+</head>
+<body>
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <main class="page-content notifications-page">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <div class="page-heading">
+                <div>
+                    <h1>Notifications</h1>
+                    <p class="page-description">
+                        View system alerts and operational updates for the Defense Logistics platform.
+                    </p>
+                </div>
+            </div>
+
+            <div th:if="${notificationError == null}" class="notification-summary">
+                <div class="notification-summary-card">
+                    <h3>Total</h3>
+                    <p class="summary-value" th:text="${totalNotifications}">0</p>
+                </div>
+                <div class="notification-summary-card">
+                    <h3>Unread</h3>
+                    <p class="summary-value" th:text="${unreadNotifications}">0</p>
+                </div>
+                <div class="notification-summary-card">
+                    <h3>Read</h3>
+                    <p class="summary-value" th:text="${readNotifications}">0</p>
+                </div>
+            </div>
+
+            <section class="page-section notification-panel" th:if="${notificationError == null}">
+                <div class="notification-toolbar">
+                    <div class="filter-group" role="tablist" aria-label="Notification filters">
+                        <button type="button" class="btn btn-secondary filter-btn active" data-filter="all" aria-pressed="true">All</button>
+                        <button type="button" class="btn btn-secondary filter-btn" data-filter="unread" aria-pressed="false">Unread</button>
+                        <button type="button" class="btn btn-secondary filter-btn" data-filter="read" aria-pressed="false">Read</button>
+                    </div>
+
+                    <a class="btn btn-secondary" th:href="@{/notifications}">Refresh</a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(notifications)}" class="empty-state">
+                    <h3>No notifications available.</h3>
+                </div>
+
+                <div id="notificationList" class="notification-list" th:unless="${#lists.isEmpty(notifications)}">
+                    <article class="notification-item"
+                             th:each="notification : ${notifications}"
+                             th:classappend="${notification.read} ? ' read' : ' unread'"
+                             th:attr="data-read=${notification.read}">
+                        <div class="notification-header">
+                            <h3 th:text="${notification.title}">Notification Title</h3>
+                            <span class="status-badge"
+                                  th:classappend="${notification.read} ? ' status-read' : ' status-unread'"
+                                  th:text="${notification.read} ? 'Read' : 'Unread'">Unread</span>
+                        </div>
+
+                        <p class="notification-message" th:text="${notification.message}">Notification message.</p>
+
+                        <div class="notification-meta">
+                            <span class="notification-type" th:text="${notification.type != null ? notification.type : 'General'}">General</span>
+                            <span th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 01, 2026 12:00</span>
+                            <span th:if="${notification.referenceId != null and !#strings.isEmpty(notification.referenceId)}"
+                                  class="notification-reference"
+                                  th:text="'Reference: ' + ${notification.referenceId}">Reference</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <div th:if="${notificationError != null}" class="error-state">
+                <h2>Notifications unavailable</h2>
+                <p th:text="${notificationError}">The notification service is currently unavailable.</p>
+                <a class="btn btn-primary" th:href="@{/notifications}">Retry</a>
+            </div>
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+<header th:fragment="header" class="top-header">
+    <div class="brand">
+        <span class="brand-icon">🛡️</span>
+        <span>Defense Logistics</span>
+    </div>
+
+<div class="header-right">
+    <a th:href="@{/notifications}" data-nav-path="/notifications">Notifications</a>
+
+    <span class="user-profile">Admin</span>
+
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="logout-button">
+            Logout
+        </button>
+    </form>
+</div>
+
+</header>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Record</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+        .container {
+            max-width: 620px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 { color: #183153; }
+        .field { margin: 16px 0; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #aebbb4;
+            border-radius: 4px;
+            font: inherit;
+        }
+        .field-error { color: #b42332; }
+        .form-actions { display: flex; gap: 16px; margin-top: 24px; }
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            color: white;
+            background: #183153;
+            font: inherit;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .container { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/vehicles">Back to Vehicles</a>
+    <h1 th:text="${vehicle.id == null ? 'Add Vehicle' : 'Edit Vehicle'}">Vehicle Record</h1>
+    <form th:action="${formAction}" th:object="${vehicle}" method="post">
+        <div class="field">
+            <label for="vehicleNumber">Vehicle Number</label>
+            <input id="vehicleNumber" type="text" th:field="*{vehicleNumber}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('vehicleNumber')}"
+               th:errors="*{vehicleNumber}"></p>
+        </div>
+        <div class="field">
+            <label for="type">Type</label>
+            <input id="type" type="text" th:field="*{type}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('type')}"
+               th:errors="*{type}"></p>
+        </div>
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" th:field="*{status}">
+                <option value="Available">Available</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+                <option value="In Use">In Use</option>
+            </select>
+            <p class="field-error" th:if="${#fields.hasErrors('status')}"
+               th:errors="*{status}"></p>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a href="/vehicles">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

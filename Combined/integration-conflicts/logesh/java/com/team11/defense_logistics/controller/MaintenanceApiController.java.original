@@ -1,0 +1,102 @@
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Maintenance;
+import com.team11.defense_logistics.service.MaintenanceService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/maintenance")
+public class MaintenanceApiController {
+
+    private final MaintenanceService maintenanceService;
+
+    public MaintenanceApiController(
+            MaintenanceService maintenanceService) {
+        this.maintenanceService = maintenanceService;
+    }
+
+    @GetMapping
+    public List<Maintenance> getAllRecords() {
+        return maintenanceService.getAllRecords();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Maintenance> getRecordById(
+            @PathVariable Long id) {
+
+        return maintenanceService.getRecordById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/vehicle/{vehicleId}")
+    public List<Maintenance> getByVehicleId(
+            @PathVariable Long vehicleId) {
+
+        return maintenanceService.getByVehicleId(vehicleId);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<Maintenance> getByStatus(
+            @PathVariable String status) {
+
+        return maintenanceService.getByStatus(status);
+    }
+
+    @PostMapping
+    public ResponseEntity<Maintenance> createRecord(
+            @Valid @RequestBody Maintenance record) {
+
+        Maintenance created =
+                maintenanceService.createRecord(record);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Maintenance> updateRecord(
+            @PathVariable Long id,
+            @Valid @RequestBody Maintenance record) {
+
+        return ResponseEntity.ok(
+                maintenanceService.updateRecord(id, record));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Maintenance> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+
+        return ResponseEntity.ok(
+                maintenanceService.updateStatus(id, status));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRecord(
+            @PathVariable Long id) {
+
+        maintenanceService.deleteRecord(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+
+        String message = exception.getMessage();
+
+        if (message != null
+                && message.startsWith("Maintenance record not found")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(message);
+        }
+
+        return ResponseEntity.badRequest().body(message);
+    }
+}

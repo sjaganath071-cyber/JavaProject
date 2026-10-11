@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movement Tracking | Defense Logistics</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7fb; margin: 0; padding: 24px; color: #1f2937; }
+        .container { max-width: 1120px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; }
+        .btn { display: inline-block; padding: 10px 16px; border-radius: 8px; text-decoration: none; background: #1d4ed8; color: #fff; font-weight: 600; }
+        .btn.secondary { background: #475569; }
+        .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(15,23,42,0.08); margin-top: 18px; }
+        .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+        th { background: #f8fafc; }
+        form { display: grid; gap: 10px; }
+        label { display: grid; gap: 6px; font-weight: 600; }
+        input, select, textarea { padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+        textarea { min-height: 80px; resize: vertical; }
+        .alert { padding: 12px 14px; border-radius: 8px; margin-bottom: 12px; }
+        .alert.success { background: #dcfce7; color: #166534; }
+        .alert.error { background: #fee2e2; color: #991b1b; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge.scheduled { background: #dbeafe; color: #1d4ed8; }
+        .badge.in-transit { background: #fef3c7; color: #92400e; }
+        .badge.completed { background: #dcfce7; color: #166534; }
+        .badge.cancelled { background: #fee2e2; color: #991b1b; }
+        .empty { padding: 16px; color: #475569; }
+        .status-form { display: flex; gap: 8px; align-items: center; }
+        button { background: #0f172a; color: #fff; border: none; border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <div style="color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;">Operations / Logistics</div>
+            <h1>Movement Tracking</h1>
+        </div>
+        <a class="btn secondary" th:href="@{/dashboard}">Back to Dashboard</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert error" th:text="${errorMessage}"></div>
+    <div class="alert success" role="status">
+        This movement page is connected to Jagan shipment data for the supported listing and status workflow. Tracking history is shown where the backend exposes it.
+    </div>
+
+    <div class="grid">
+        <section class="panel">
+            <h2>Movement register</h2>
+            <table th:if="${!#lists.isEmpty(movements)}">
+                <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Origin</th>
+                    <th>Destination</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="movement : ${movements}">
+                    <td th:text="${movement.vehicleId}">1</td>
+                    <td th:text="${movement.origin}">HQ</td>
+                    <td th:text="${movement.destination}">Depot</td>
+                    <td>
+                        <span class="badge" th:classappend="${#strings.toLowerCase(movement.status).replace(' ', '-')}"
+                              th:text="${movement.status}">Scheduled</span>
+                    </td>
+                    <td th:text="${movement.notes != null ? movement.notes : '—'}">—</td>
+                    <td>
+                        <form class="status-form" th:action="@{/movements/{id}/status(id=${movement.id})}" method="post">
+                            <select name="status">
+                                <option value="In Transit" th:selected="${#strings.equalsIgnoreCase(movement.status, 'Scheduled')}">In Transit</option>
+                                <option value="Completed" th:selected="${#strings.equalsIgnoreCase(movement.status, 'In Transit')}">Completed</option>
+                                <option value="Cancelled" th:selected="${#strings.equalsIgnoreCase(movement.status, 'Scheduled')}">Cancelled</option>
+                            </select>
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(movements)}" class="empty">No movements have been scheduled yet.</div>
+        </section>
+
+        <section class="panel">
+            <h2>Schedule movement</h2>
+            <form th:action="@{/movements}" th:object="${movement}" method="post">
+                <div th:if="${#fields.hasErrors('*')}" class="alert error">
+                    <ul>
+                        <li th:each="err : ${#fields.errors('*')}"><span th:text="${err}"></span></li>
+                    </ul>
+                </div>
+
+                <label>
+                    Vehicle ID
+                    <select th:field="*{vehicleId}">
+                        <option value="">Select vehicle</option>
+                        <option th:each="vehicle : ${vehicles}"
+                                th:value="${vehicle.id}"
+                                th:text="${vehicle.name + ' (' + vehicle.vehicleCode + ')'}"></option>
+                    </select>
+                </label>
+
+                <label>
+                    Allocation ID (optional)
+                    <input type="number" th:field="*{allocationId}" placeholder="Allocation ID" min="1" />
+                </label>
+
+                <label>
+                    Origin
+                    <input type="text" th:field="*{origin}" placeholder="Origin" />
+                </label>
+
+                <label>
+                    Destination
+                    <input type="text" th:field="*{destination}" placeholder="Destination" />
+                </label>
+
+                <label>
+                    Notes
+                    <textarea th:field="*{notes}" placeholder="Notes or remarks"></textarea>
+                </label>
+
+                <button type="submit" class="btn">Create movement</button>
+            </form>
+        </section>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' | Defense Logistics'">Logistics Request Form</title>
+    <link rel="stylesheet" th:href="@{/css/logistics-requests.css}">
+</head>
+<body>
+<div class="lr-page lr-form-page">
+
+    <header class="lr-page-header">
+        <div>
+            <div class="lr-breadcrumb">
+                Operations / Resource Management / Logistics Requests
+            </div>
+            <h1 th:text="${pageTitle}">Create Logistics Request</h1>
+            <p>Provide the request information and required timeline.</p>
+        </div>
+
+        <a class="lr-button lr-button-secondary"
+           th:href="@{/logistics-requests}">Back to Requests</a>
+    </header>
+
+    <div th:if="${errorMessage}" class="lr-alert lr-alert-error"
+         th:text="${errorMessage}"></div>
+
+    <section class="lr-panel lr-form-panel">
+        <form method="post" th:action="${formAction}"
+              th:object="${request}" class="lr-form">
+
+            <input type="hidden" th:field="*{id}">
+
+            <div class="lr-form-section-title">
+                <h2>Request Information</h2>
+                <p>Fields marked with * are required.</p>
+            </div>
+
+            <div class="lr-form-grid">
+
+                <div class="lr-field">
+                    <label for="requestCode">Request Code *</label>
+                    <input id="requestCode" type="text"
+                           th:field="*{requestCode}"
+                           placeholder="Example: REQ-2026-001"
+                           maxlength="50" required>
+                    <small class="lr-field-error"
+                           th:errors="*{requestCode}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="requestingUnit">Requesting Unit *</label>
+                    <input id="requestingUnit" type="text"
+                           th:field="*{requestingUnit}"
+                           placeholder="Enter requesting unit"
+                           maxlength="100" required>
+                    <small class="lr-field-error"
+                           th:errors="*{requestingUnit}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="requestType">Request Type *</label>
+                    <select id="requestType" th:field="*{requestType}" required>
+                        <option value="">Select request type</option>
+                        <option value="PERSONNEL">Personnel</option>
+                        <option value="VEHICLE">Vehicle</option>
+                        <option value="EQUIPMENT">Equipment</option>
+                        <option value="SUPPLIES">Supplies</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                    <small class="lr-field-error"
+                           th:errors="*{requestType}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="priority">Priority *</label>
+                    <select id="priority" th:field="*{priority}" required>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="CRITICAL">Critical</option>
+                    </select>
+                    <small class="lr-field-error"
+                           th:errors="*{priority}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="requestedDate">Requested Date *</label>
+                    <input id="requestedDate" type="date"
+                           th:field="*{requestedDate}" required>
+                    <small class="lr-field-error"
+                           th:errors="*{requestedDate}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="requiredByDate">Required By *</label>
+                    <input id="requiredByDate" type="date"
+                           th:field="*{requiredByDate}" required>
+                    <small class="lr-field-error"
+                           th:errors="*{requiredByDate}"></small>
+                    <small class="lr-field-hint">
+                        Must not be earlier than the requested date.
+                    </small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="status">Request Status *</label>
+                    <select id="status" th:field="*{status}" required>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="ALLOCATED">Allocated</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                    <small class="lr-field-error"
+                           th:errors="*{status}"></small>
+                </div>
+
+                <div class="lr-field">
+                    <label for="assignedResource">Assigned Resource</label>
+                    <input id="assignedResource" type="text"
+                           th:field="*{assignedResource}"
+                           placeholder="Optional resource identifier"
+                           maxlength="100">
+                    <small class="lr-field-hint">
+                        Leave blank if a resource has not yet been assigned.
+                    </small>
+                    <small class="lr-field-error"
+                           th:errors="*{assignedResource}"></small>
+                </div>
+
+                <div class="lr-field lr-field-full">
+                    <label for="description">Request Description *</label>
+                    <textarea id="description" th:field="*{description}"
+                              rows="4" maxlength="1000" required
+                              placeholder="Explain what is needed and why."></textarea>
+                    <small class="lr-field-error"
+                           th:errors="*{description}"></small>
+                </div>
+
+                <div class="lr-field lr-field-full">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes" th:field="*{notes}"
+                              rows="3" maxlength="1000"
+                              placeholder="Optional supporting information"></textarea>
+                    <small class="lr-field-error"
+                           th:errors="*{notes}"></small>
+                </div>
+
+            </div>
+
+            <div class="lr-form-actions">
+                <a class="lr-button lr-button-secondary"
+                   th:href="@{/logistics-requests}">Cancel</a>
+                <button class="lr-button lr-button-primary" type="submit">
+                    Save Request
+                </button>
+            </div>
+        </form>
+    </section>
+
+</div>
+</body>
+</html>

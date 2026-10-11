@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Item</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+        .container {
+            max-width: 680px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 { color: #203b33; }
+        .field { margin: 16px 0; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #aebbb4;
+            border-radius: 4px;
+            font: inherit;
+        }
+        input[readonly] { background: #f1f4f2; }
+        .field-error, .global-errors { color: #b42332; }
+        .form-actions { display: flex; gap: 16px; margin-top: 24px; }
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            color: white;
+            background: #203b33;
+            font: inherit;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .container { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/inventory">Back to Inventory</a>
+    <h1 th:text="${item.id == null ? 'Add Item' : 'Edit Item'}">Inventory Item</h1>
+    <form th:action="${formAction}" th:object="${item}" method="post">
+        <div class="global-errors" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+        <div class="field">
+            <label for="itemCode">Item Code</label>
+            <input id="itemCode" type="text" th:field="*{itemCode}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('itemCode')}"
+               th:errors="*{itemCode}"></p>
+        </div>
+        <div class="field">
+            <label for="itemName">Item Name</label>
+            <input id="itemName" type="text" th:field="*{itemName}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('itemName')}"
+               th:errors="*{itemName}"></p>
+        </div>
+        <div class="field">
+            <label for="category">Category</label>
+            <input id="category" type="text" th:field="*{category}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('category')}"
+               th:errors="*{category}"></p>
+        </div>
+        <div class="field">
+            <label for="quantity">Available Quantity</label>
+            <input id="quantity" type="number" min="0" step="1"
+                   th:field="*{quantity}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('quantity')}"
+               th:errors="*{quantity}"></p>
+        </div>
+        <div class="field">
+            <label for="unit">Unit</label>
+            <input id="unit" type="text" th:field="*{unit}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('unit')}"
+               th:errors="*{unit}"></p>
+        </div>
+        <div class="field">
+            <label for="status">Status (calculated from quantity)</label>
+            <input id="status" type="text" th:field="*{status}" readonly>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a href="/inventory">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Movement Tracking | Defense Logistics</title>
+    <style>
+        body { margin: 24px; font-family: Arial, sans-serif; color: #222; background: #f4f6f9; }
+        main { max-width: 1250px; margin: auto; padding: 24px; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #d5ddd9; text-align: left; }
+        th { color: white; background: #203b33; }
+        input, select, button { font: inherit; }
+        .message { padding: 10px; background: #edf6ef; }
+        .error { background: #fff0f1; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+        .form-row label { display: grid; gap: 5px; }
+        @media (max-width: 700px) { body { margin: 10px; } main { padding: 14px; } }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Movement Tracking</h1>
+    <nav>
+        <a href="/">Dashboard</a> |
+        <a href="/vehicles">Vehicles</a> |
+        <a href="/allocations">Allocations</a>
+    </nav>
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p th:if="${#lists.isEmpty(movements)}">No movements recorded yet.</p>
+
+    <section th:if="${!#lists.isEmpty(vehicles)}">
+        <h2>Create movement</h2>
+        <form th:action="@{/movements}" th:object="${movement}" method="post">
+            <div class="form-row">
+                <label for="vehicleId">Vehicle
+                    <select id="vehicleId" th:field="*{vehicleId}" required>
+                        <option value="">Select vehicle</option>
+                        <option th:each="vehicle : ${vehicles}"
+                                th:value="${vehicle.id}"
+                                th:text="|${vehicle.id} - ${vehicle.vehicleNumber} (${vehicle.type})|"></option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('vehicleId')}" th:errors="*{vehicleId}"></span>
+                </label>
+                <label for="allocationId">Active allocation (optional)
+                    <select id="allocationId" th:field="*{allocationId}">
+                        <option value="">No allocation link</option>
+                        <option th:each="allocation : ${activeAllocations}"
+                                th:value="${allocation.id}"
+                                th:text="|${allocation.id} - Request ${allocation.requestId}, vehicle ${allocation.vehicleId}|"></option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('allocationId')}" th:errors="*{allocationId}"></span>
+                </label>
+                <label for="origin">Origin
+                    <input id="origin" type="text" th:field="*{origin}" required>
+                    <span th:if="${#fields.hasErrors('origin')}" th:errors="*{origin}"></span>
+                </label>
+                <label for="destination">Destination
+                    <input id="destination" type="text" th:field="*{destination}" required>
+                    <span th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></span>
+                </label>
+                <label for="notes">Notes (optional)
+                    <input id="notes" type="text" th:field="*{notes}">
+                </label>
+            </div>
+            <div th:if="${#fields.hasGlobalErrors()}">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+            <button type="submit">Create movement</button>
+        </form>
+    </section>
+    <p th:if="${#lists.isEmpty(vehicles)}">No vehicles are available to record a movement.</p>
+
+    <table border="1" cellpadding="8">
+        <thead>
+        <tr><th>ID</th><th>Vehicle</th><th>Allocation</th><th>Origin</th><th>
+
+<th>Destination</th><th>Departure</th><th>Arrival</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
+</thead>
+<tbody>
+<tr th:each="m : ${movements}">
+<td th:text="${m.id}"></td>
+<td th:text="${m.vehicleId}"></td>
+<td th:text="${m.allocationId}"></td>
+<td th:text="${m.origin}"></td>
+<td th:text="${m.destination}"></td>
+<td th:text="${m.departureTime}"></td>
+<td th:text="${m.arrivalTime}"></td>
+<td th:text="${m.status}"></td>
+<td th:text="${m.notes}"></td>
+<td>
+        <form th:if="${m.status == 'Scheduled'}"
+                    th:action="@{/movements/{id}/status(id=${m.id})}" method="post">
+                <input type="hidden" name="status" value="In Transit">
+                <button type="submit">Start</button>
+        </form>
+        <form th:if="${m.status == 'Scheduled'}"
+                    th:action="@{/movements/{id}/status(id=${m.id})}" method="post">
+                <input type="hidden" name="status" value="Cancelled">
+                <button type="submit">Cancel</button>
+        </form>
+        <form th:if="${m.status == 'In Transit'}"
+                    th:action="@{/movements/{id}/status(id=${m.id})}" method="post">
+                <input type="hidden" name="status" value="Completed">
+                <button type="submit">Complete</button>
+        </form>
+        <span th:if="${m.status == 'Completed' || m.status == 'Cancelled'}">No actions</span>
+</td>
+</tr>
+</tbody>
+</table>
+</main>
+</body>
+</html>

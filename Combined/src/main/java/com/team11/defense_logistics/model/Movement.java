@@ -1,0 +1,109 @@
+package com.team11.defense_logistics.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+public class Movement {
+
+    private Long id;
+
+    @NotNull(message = "Vehicle ID is required")
+    @Positive(message = "Vehicle ID must be positive")
+    private Long vehicleId;
+
+    @Positive(message = "Allocation ID must be positive")
+    private Long allocationId;
+
+    @NotBlank(message = "Origin is required")
+    private String origin;
+
+    @NotBlank(message = "Destination is required")
+    private String destination;
+
+    @Pattern(regexp = "^(Scheduled|In Transit|Completed|Cancelled)$",
+            message = "Movement status is invalid")
+    private String status = "Scheduled";
+
+    private String notes;
+    private LocalDateTime departureTime;
+    private LocalDateTime arrivalTime;
+
+    public Movement() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(Long vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public Long getAllocationId() {
+        return allocationId;
+    }
+
+    public void setAllocationId(Long allocationId) {
+        this.allocationId = allocationId;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public LocalDateTime getDepartureTime() {
+        return departureTime;
+    }
+
+    public void setDepartureTime(LocalDateTime departureTime) {
+        this.departureTime = departureTime;
+    }
+
+    public LocalDateTime getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setArrivalTime(LocalDateTime arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+}

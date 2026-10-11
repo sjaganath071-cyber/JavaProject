@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f4f6f9;
+            color: #222;
+        }
+
+        h1 {
+            color: #183153;
+        }
+
+        p {
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #183153;
+            color: white;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f0f3f7;
+        }
+
+        .available {
+            color: green;
+            font-weight: bold;
+        }
+
+        .maintenance {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .in-use {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-left: 4px solid #218838;
+            background: #edf6ef;
+        }
+
+        .error {
+            border-color: #c82333;
+            background: #fff0f1;
+        }
+
+        button {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: #183153;
+            font: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .row-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/">Back to Dashboard</a>
+    <h1>Vehicle Management</h1>
+    <p>Manage and monitor logistics vehicles.</p>
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p><a href="/vehicles/new">Add Vehicle</a></p>
+
+    <div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Vehicle ID</th>
+                <th>Vehicle Number</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr th:each="vehicle : ${vehicles}">
+                <td th:text="${vehicle.id}">1</td>
+                <td th:text="${vehicle.vehicleNumber}">TN01AB1234</td>
+                <td th:text="${vehicle.type}">Truck</td>
+                <td th:text="${vehicle.status}">Available</td>
+                <td>
+                    <div class="row-actions">
+                        <a th:href="@{/vehicles/edit/{id}(id=${vehicle.id})}">Edit</a>
+                        <form th:action="@{/vehicles/delete/{id}(id=${vehicle.id})}"
+                              method="post">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(vehicles)}">
+                <td colspan="5">No vehicles available.</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+</body>
+</html>

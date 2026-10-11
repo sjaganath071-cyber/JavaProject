@@ -1,0 +1,240 @@
+DEFENSE LOGISTICS & RESOURCE MANAGEMENT — ORACLE SETUP
+
+1. Database users and schema ownership from project configuration
+----------------------------------------------------------------
+resource-service/src/main/resources/application.properties:
+  username: SYSTEM
+  Oracle service: localhost:1521/xepdb1
+  Hibernate DDL: none
+
+logistics-service/src/main/resources/application.properties:
+  username: SYSTEM
+  Oracle service: localhost:1521/xepdb1
+  Hibernate DDL: update
+
+Both backends therefore connect as the same Oracle user, SYSTEM, in the same
+PDB/service. Under the default Oracle session schema behavior, their unqualified
+tables reside in the SYSTEM schema. The properties files do not configure two
+different schemas. No password is printed or included in this document.
+
+Combined/src/main/resources/application.properties configures HTTP base URLs
+for the two services and contains no datasource or JPA configuration. Combined
+is not a third database owner; it talks to the services over HTTP.
+
+This identifies the configured database user, not the actual state of a
+running database. If a login trigger, externally supplied configuration, or
+manual ALTER SESSION changes CURRENT_SCHEMA, verify the live session below.
+The insert script refuses to run when CURRENT_SCHEMA differs from SESSION_USER.
+
+2. Required schema setup and unresolved resource VEHICLES prerequisite
+----------------------------------------------------------------------
+Use a PowerShell window and connect as the configured owner. SQL*Plus prompts
+for the password; do not put the password on the command line:
+
+  sqlplus SYSTEM@//localhost:1521/xepdb1
+
+At the SQL> prompt, verify the session:
+
+  SHOW USER
+  SELECT SYS_CONTEXT('USERENV', 'SESSION_USER') AS login_user,
+         SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS current_schema
+  FROM dual;
+
+First, create the resource-service objects that have an authoritative schema
+script. Run this while connected as SYSTEM:
+
+  @C:\Users\sjaga\OneDrive\Desktop\JavaProject\resource-service\src\main\resources\db\schema.sql
+
+This creates absent PERSONNEL, ASSETS, INVENTORY_ITEMS,
+INVENTORY_TRANSACTIONS, and MAINTENANCE_RECORDS tables, their sequences, and
+supporting indexes. It does not modify, create, or reset VEHICLES or
+VEHICLE_SEQ.
+
+The resource schema README claims VEHICLES and VEHICLE_SEQ already exist. The
+latest SYSTEM preflight finds a VEHICLES table, but reports these required
+columns missing: VEHICLE_NUMBER, CAPACITY, LOCATION_CODE, CONDITION_STATUS,
+CREATED_AT, and UPDATED_AT. This indicates an existing schema mismatch,
+possibly a legacy table. It does not justify creating a second table or
+altering/replacing the existing one. No SQL file in resource-service,
+logistics-service, or Combined defines authoritative DDL for this table.
+
+The entity defines the authoritative application mapping:
+VEHICLE_ID, VEHICLE_NUMBER, VEHICLE_TYPE, CAPACITY, UNIT_ID, LOCATION_CODE,
+CONDITION_STATUS, STATUS, CREATED_AT, UPDATED_AT, with VEHICLE_SEQ for IDs.
+The legacy table's REGISTRATION_NUMBER and LOCATION can be copied into
+VEHICLE_NUMBER and LOCATION_CODE without dropping the source columns. There is
+no trustworthy source for existing CAPACITY values, so those must be supplied
+from actual vehicle records; the migration never invents them.
+
+First inspect the table using these read-only queries while connected as SYSTEM:
+
+  SELECT column_id, column_name, data_type, data_length,
+         data_precision, data_scale, nullable, data_default
+  FROM user_tab_columns
+  WHERE table_name = 'VEHICLES'
+  ORDER BY column_id;
+
+  SELECT c.constraint_name, c.constraint_type, c.status,
+         cc.column_name, r.table_name AS referenced_table,
+         rc.column_name AS referenced_column, c.search_condition_vc
+  FROM user_constraints c
+  LEFT JOIN user_cons_columns cc
+    ON cc.constraint_name = c.constraint_name
+   AND cc.table_name = c.table_name
+  LEFT JOIN user_constraints r
+    ON r.constraint_name = c.r_constraint_name
+  LEFT JOIN user_cons_columns rc
+    ON rc.constraint_name = r.constraint_name
+   AND rc.table_name = r.table_name
+   AND rc.position = cc.position
+  WHERE c.table_name = 'VEHICLES'
+  ORDER BY c.constraint_name, cc.position;
+
+  SELECT trigger_name, status, triggering_event
+  FROM user_triggers
+  WHERE table_name = 'VEHICLES'
+  ORDER BY trigger_name;
+
+  SELECT owner, table_name
+  FROM all_tables
+  WHERE table_name = 'VEHICLES'
+  ORDER BY owner;
+
+Review the table metadata and backup it according to your database process.
+Then run the separate additive migration, which preserves old columns and rows:
+
+  @C:\Users\sjaga\OneDrive\Desktop\JavaProject\resource-service\src\main\resources\db\migrate_legacy_vehicles.sql
+
+On the first run, the migration adds only absent entity-mapped columns and
+copies registration/location values and timestamps. It then stops explicitly
+if existing rows have no CAPACITY. This is expected: inspect existing vehicles
+and update CAPACITY with authoritative values, for example:
+
+  SELECT VEHICLE_ID, REGISTRATION_NUMBER, VEHICLE_NAME, VEHICLE_TYPE
+  FROM VEHICLES
+  ORDER BY VEHICLE_ID;
+
+  UPDATE VEHICLES SET CAPACITY = <verified_capacity>
+  WHERE VEHICLE_ID = <verified_vehicle_id>;
+  COMMIT;
+
+Replace each placeholder only with a value verified from the fleet records.
+Do not run the example literally. Rerun migrate_legacy_vehicles.sql after all
+existing rows have positive, verified capacity values. It then validates
+required data, adds missing primary/unique/not-null/capacity-check constraints,
+and creates VEHICLE_SEQ above the current maximum VEHICLE_ID only if the
+sequence is absent. Existing sequences are never reset.
+
+This migration does not drop columns, rewrite IDs, truncate, or delete records.
+Oracle DDL commits implicitly; review and back up before running it. The
+insert-file preflight remains blocking until the migration completes.
+
+If a previous migration attempt ended with ORA-02264 (constraint name already
+used), Oracle may have committed earlier ALTER TABLE statements in that run.
+The migration is designed to be rerun: it checks the table/columns and
+constraints again, and now generates an unused constraint/index-safe name when
+it must add the VEHICLES primary key, vehicle-number uniqueness, or capacity
+check. Do not drop the existing constraint that caused the name collision.
+Reconnect as SYSTEM and rerun the migration file.
+
+To confirm where the expected objects currently exist (safe read-only catalog
+queries), run:
+
+  SELECT owner, table_name
+  FROM all_tables
+  WHERE table_name IN (
+    'PERSONNEL', 'ASSETS', 'VEHICLES', 'INVENTORY_ITEMS',
+    'INVENTORY_TRANSACTIONS', 'MAINTENANCE_RECORDS'
+  )
+  ORDER BY owner, table_name;
+
+  SELECT sequence_owner, sequence_name
+  FROM all_sequences
+  WHERE sequence_name IN (
+    'PERSONNEL_SEQ', 'ASSET_SEQ', 'VEHICLE_SEQ',
+    'INVENTORY_ITEM_SEQ', 'INVENTORY_TRANSACTION_SEQ', 'MAINTENANCE_SEQ'
+  )
+  ORDER BY sequence_owner, sequence_name;
+
+If VEHICLES or VEHICLE_SEQ appears under another owner, do not copy/create
+duplicates in SYSTEM or grant broad privileges. Reconcile the intended owner
+with the service configuration and approved database administration process.
+The checked-in app properties currently point both services at SYSTEM, so
+cross-schema seeding is not supported by the current combined insert file.
+
+Next, let the logistics service create/update its own mapped tables. There is
+no logistics schema SQL file in the project; that service uses
+spring.jpa.hibernate.ddl-auto=update. In a separate PowerShell window:
+
+  Set-Location 'C:\Users\sjaga\OneDrive\Desktop\JavaProject\logistics-service'
+  .\mvnw.cmd spring-boot:run
+
+Wait for normal successful startup and keep the service running during schema
+initialization. Its configured datasource is SYSTEM@xepdb1. The logistics
+tables include LOGISTICS_REQUESTS, LOGISTICS_REQUEST_ITEMS,
+LOGISTICS_ALLOCATIONS, LOGISTICS_SHIPMENTS, SHIPMENT_TRACKING, and its own
+singular VEHICLE table. That VEHICLE is a different entity/table from the
+resource service's plural VEHICLES table.
+
+3. Running the demo inserts
+---------------------------
+Only after the resource VEHICLES column mismatch is resolved and all 12 tables
+and six resource sequences are confirmed in SYSTEM, return to the SQL*Plus
+session connected above and run:
+
+  @C:\Users\sjaga\OneDrive\Desktop\JavaProject\insert_all_tables.sql
+
+The script preflights all target tables, inserted columns, and required
+sequences in the connected owner before inserting. It prints progress per
+table, runs all inserts in one PL/SQL block, and commits only after successful
+completion. SQL errors trigger rollback and SQL*Plus exit. The data-set marker
+makes repeat runs skip an already inserted demo dataset instead of duplicate
+it. No real-database execution has been performed by this task.
+
+For resource-service VEHICLES, the inserts populate both the entity-mapped
+columns and the legacy REGISTRATION_NUMBER, VEHICLE_NAME, and LOCATION columns
+reported in the existing table. This satisfies legacy NOT NULL fields while
+keeping the resource entity fields populated. The preflight checks all these
+columns. The singular logistics-service VEHICLE remains a separate table.
+
+There is no safe complete command sequence to run the insert script until the
+resource VEHICLES migration completes and VEHICLE_SEQ is confirmed in SYSTEM.
+Running it earlier should stop at preflight with missing columns, constraints,
+or sequence names rather than reach the INSERT statements.
+
+4. Verify demo rows
+-------------------
+After a successful insert, verify total rows in the connected schema:
+
+  SELECT 'PERSONNEL' AS table_name, COUNT(*) AS row_count FROM PERSONNEL
+  UNION ALL SELECT 'ASSETS', COUNT(*) FROM ASSETS
+  UNION ALL SELECT 'VEHICLES (resource)', COUNT(*) FROM VEHICLES
+  UNION ALL SELECT 'INVENTORY_ITEMS', COUNT(*) FROM INVENTORY_ITEMS
+  UNION ALL SELECT 'INVENTORY_TRANSACTIONS', COUNT(*) FROM INVENTORY_TRANSACTIONS
+  UNION ALL SELECT 'MAINTENANCE_RECORDS', COUNT(*) FROM MAINTENANCE_RECORDS
+  UNION ALL SELECT 'LOGISTICS_REQUESTS', COUNT(*) FROM LOGISTICS_REQUESTS
+  UNION ALL SELECT 'LOGISTICS_REQUEST_ITEMS', COUNT(*) FROM LOGISTICS_REQUEST_ITEMS
+  UNION ALL SELECT 'LOGISTICS_ALLOCATIONS', COUNT(*) FROM LOGISTICS_ALLOCATIONS
+  UNION ALL SELECT 'VEHICLE (logistics)', COUNT(*) FROM VEHICLE
+  UNION ALL SELECT 'LOGISTICS_SHIPMENTS', COUNT(*) FROM LOGISTICS_SHIPMENTS
+  UNION ALL SELECT 'SHIPMENT_TRACKING', COUNT(*) FROM SHIPMENT_TRACKING;
+
+The SQL file contains five inserts for each of the 12 entity tables: PERSONNEL,
+ASSETS, resource VEHICLES, INVENTORY_ITEMS, INVENTORY_TRANSACTIONS,
+MAINTENANCE_RECORDS, LOGISTICS_REQUESTS, LOGISTICS_REQUEST_ITEMS,
+LOGISTICS_ALLOCATIONS, logistics VEHICLE, LOGISTICS_SHIPMENTS, and
+SHIPMENT_TRACKING.
+
+5. Known limitations
+--------------------
+- No connection to Oracle was made and no database operation was performed.
+- Both services are configured with SYSTEM; actual object ownership must still
+  be verified with the read-only ALL_TABLES/ALL_SEQUENCES queries above.
+- The resource service schema script creates five resource tables, but not the
+  pre-existing VEHICLES table/VEHICLE_SEQ. VEHICLES exists in SYSTEM with the
+  reported legacy columns and does not match the entity mapping. The additive
+  migration is provided, but existing CAPACITY values must be entered from
+  authoritative fleet data before it can finish. Until then, all-table seeding
+  is blocked by design.
+- Logistics DDL is managed by Hibernate at service startup; no hand-written
+  logistics schema script is present.

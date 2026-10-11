@@ -1,0 +1,84 @@
+package com.team11.defense_logistics.service;
+
+import com.team11.defense_logistics.model.Approval;
+import com.team11.defense_logistics.model.LogisticsRequest;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Service
+public class ApprovalService {
+
+    private final Map<Long, Approval> records = new LinkedHashMap<>();
+    private final AtomicLong sequence = new AtomicLong(1);
+    private final LogisticsRequestService requestService;
+
+    public ApprovalService(LogisticsRequestService requestService) {
+        this.requestService = requestService;
+    }
+
+    public synchronized List<Approval> findAll() {
+        return new ArrayList<>(records.values());
+    }
+
+    public synchronized Optional<Approval> findById(Long id) {
+        return Optional.ofNullable(records.get(id));
+    }
+
+    public synchronized List<Approval> findByRequestId(Long requestId) {
+        return records.values().stream()
+                .filter(a -> Objects.equals(a.getRequestId(), requestId))
+                .toList();
+    }
+
+    public synchronized Approval create(Approval a) {
+        if (a == null || a.getRequestId() == null || a.getRequestId() <= 0) {
+            throw new IllegalArgumentException("Positive requestId required");
+        }
+
+        if (a.getApproverName() == null || a.getApproverName().isBlank()) {
+            throw new IllegalArgumentException("Approver name required");
+        }
+
+        if (a.getDecision() == null
+                || (!"Approved".equalsIgnoreCase(a.getDecision())
+                && !"Rejected".equalsIgnoreCase(a.getDecision()))) {
+            throw new IllegalArgumentException(
+                    "Decision must be Approved or Rejected");
+        }
+
+        LogisticsRequest request = requestService
+                .getRequestById(a.getRequestId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Logistics request not found"));
+
+        if (!"Pending".equalsIgnoreCase(request.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Only pending requests can be approved or rejected");
+        }
+
+        if (!findByRequestId(a.getRequestId()).isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Decision already exists for this request");
+        }
+
+        String decision = a.getDecision().equalsIgnoreCase("Approved")
+                ? "Approved" : "Rejected";
+
+        Approval recorded = new Approval();
+        recorded.setRequestId(request.getId());
+        recorded.setApproverName(a.getApproverName().trim());
+        recorded.setDecision(decision);
+        recorded.setComments(a.getComments() == null || a.getComments().isBlank()
+            ? null : a.getComments().trim());
+        recorded.setId(sequence.getAndIncrement());
+        recorded.setDecisionDate(LocalDateTime.now());
+
+        requestService.updateStatus(request.getId(), decision);
+        records.put(recorded.getId(), recorded);
+
+        return recorded;
+    }
+}

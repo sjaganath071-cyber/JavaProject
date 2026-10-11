@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${formTitle} + ' | Defense Logistics'">
+        Inventory Item Form
+    </title>
+    <link rel="stylesheet" th:href="@{/css/inventory.css}">
+</head>
+<body>
+
+<div class="inventory-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">INVENTORY MANAGEMENT</p>
+            <h1 th:text="${formTitle}">Inventory Item</h1>
+            <p class="subtitle">
+                Enter the item details and stock requirements.
+            </p>
+        </div>
+
+        <a class="button button-secondary" th:href="@{/inventory}">
+            Back to Inventory
+        </a>
+    </header>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="content-card form-card">
+
+        <form th:action="${formAction}"
+              th:object="${item}"
+              method="post">
+
+            <div class="form-error-summary"
+                 th:if="${#fields.hasErrors('*')}">
+                Please correct the validation errors below.
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-field">
+                    <label for="itemCode">Item Code *</label>
+                    <input type="text"
+                           id="itemCode"
+                           th:field="*{itemCode}"
+                           placeholder="e.g. SUP-1001"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{itemCode}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="name">Item Name *</label>
+                    <input type="text"
+                           id="name"
+                           th:field="*{name}"
+                           placeholder="Enter item name"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{name}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="category">Category *</label>
+                    <select id="category" th:field="*{category}" required>
+                        <option value="">Select category</option>
+                        <option value="Medical Supplies">Medical Supplies</option>
+                        <option value="Food & Water">Food &amp; Water</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Fuel">Fuel</option>
+                        <option value="Spare Parts">Spare Parts</option>
+                        <option value="Tools">Tools</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="General">General</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{category}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="unit">Unit of Measurement *</label>
+                    <select id="unit" th:field="*{unit}" required>
+                        <option value="">Select unit</option>
+                        <option value="pieces">Pieces</option>
+                        <option value="boxes">Boxes</option>
+                        <option value="litres">Litres</option>
+                        <option value="kilograms">Kilograms</option>
+                        <option value="packs">Packs</option>
+                        <option value="sets">Sets</option>
+                    </select>
+                    <small class="field-error"
+                           th:errors="*{unit}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="quantity">Available Quantity *</label>
+                    <input type="number"
+                           id="quantity"
+                           th:field="*{quantity}"
+                           min="0"
+                           placeholder="0"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{quantity}"></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="minimumStock">Minimum Stock Level *</label>
+                    <input type="number"
+                           id="minimumStock"
+                           th:field="*{minimumStock}"
+                           min="0"
+                           placeholder="0"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{minimumStock}"></small>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="storageLocation">Storage Location *</label>
+                    <input type="text"
+                           id="storageLocation"
+                           th:field="*{storageLocation}"
+                           placeholder="e.g. Central Warehouse - Shelf A4"
+                           required>
+                    <small class="field-error"
+                           th:errors="*{storageLocation}"></small>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="description">Description</label>
+                    <textarea id="description"
+                              th:field="*{description}"
+                              rows="4"
+                              placeholder="Optional notes about this item"></textarea>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <a class="button button-secondary" th:href="@{/inventory}">
+                    Cancel
+                </a>
+
+                <button class="button button-primary" type="submit">
+                    Save Inventory Item
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+</body>
+</html>

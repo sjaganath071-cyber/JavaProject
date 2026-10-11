@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Item Details | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/inventory.css}">
+</head>
+<body>
+
+<div class="inventory-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">INVENTORY MANAGEMENT</p>
+            <h1>Inventory Item Details</h1>
+            <p class="subtitle">
+                Review item information and current stock levels.
+            </p>
+        </div>
+
+        <div class="header-actions">
+            <a class="button button-secondary" th:href="@{/inventory}">
+                Back to Inventory
+            </a>
+
+            <a class="button button-primary"
+               th:href="@{/inventory/{id}/edit(id=${item.id})}">
+                Edit Item
+            </a>
+        </div>
+    </header>
+
+    <section class="content-card details-card">
+
+        <div class="details-heading">
+            <div>
+                <span class="eyebrow">ITEM CODE</span>
+                <h2 th:text="${item.itemCode}">SUP-1001</h2>
+                <p class="subtitle" th:text="${item.name}">Item Name</p>
+            </div>
+
+            <span class="status-badge"
+                  th:classappend="${item.stockStatus == 'IN_STOCK'} ? ' status-good' :
+                  (${item.stockStatus == 'LOW_STOCK'} ? ' status-warning' : ' status-danger')"
+                  th:text="${item.stockStatus == 'IN_STOCK'} ? 'In Stock' :
+                  (${item.stockStatus == 'LOW_STOCK'} ? 'Low Stock' :
+                  (${item.stockStatus == 'OUT_OF_STOCK'} ? 'Out of Stock' : 'Unknown'))">
+                In Stock
+            </span>
+        </div>
+
+        <div class="stock-comparison">
+            <div>
+                <span class="summary-label">Available Quantity</span>
+                <strong th:text="${item.quantity}">0</strong>
+                <span class="unit-label" th:text="${item.unit}">pieces</span>
+            </div>
+
+            <div>
+                <span class="summary-label">Minimum Stock</span>
+                <strong th:text="${item.minimumStock}">0</strong>
+                <span class="unit-label" th:text="${item.unit}">pieces</span>
+            </div>
+
+            <div>
+                <span class="summary-label">Stock Difference</span>
+                <strong th:text="${item.quantity != null and item.minimumStock != null
+                    ? item.quantity - item.minimumStock : 'N/A'}">0</strong>
+                <span class="unit-label">relative to minimum</span>
+            </div>
+        </div>
+
+        <div class="details-grid">
+
+            <div class="detail-item">
+                <span>Item Name</span>
+                <strong th:text="${item.name}">Item Name</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Category</span>
+                <strong th:text="${item.category}">General</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Unit of Measurement</span>
+                <strong th:text="${item.unit}">Pieces</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Storage Location</span>
+                <strong th:text="${item.storageLocation}">Warehouse A</strong>
+            </div>
+
+            <div class="detail-item full-width">
+                <span>Description</span>
+                <strong th:text="${item.description != null and !item.description.isBlank()
+                    ? item.description : 'No description provided'}">
+                    No description provided
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="details-footer">
+            <a class="button button-secondary" th:href="@{/inventory}">
+                Return to Inventory
+            </a>
+
+            <a class="button button-primary"
+               th:href="@{/inventory/{id}/edit(id=${item.id})}">
+                Edit Inventory Item
+            </a>
+        </div>
+
+    </section>
+
+</div>
+
+</body>
+</html>

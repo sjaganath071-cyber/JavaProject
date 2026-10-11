@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Details | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/personnel.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="brand" th:href="@{/dashboard}">
+        <span class="brand-mark">DL</span>
+        <span>Defense Logistics</span>
+    </a>
+
+    <nav class="topnav">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <a class="active" th:href="@{/personnel}">Personnel</a>
+        <a th:href="@{/assets}">Assets</a>
+        <a th:href="@{/reports/readiness}">Readiness Reports</a>
+        <a th:href="@{/notifications}">Notifications</a>
+        <a th:href="@{/audit-history}">Audit History</a>
+    </nav>
+</header>
+
+<main class="page-container narrow-container">
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">PERSONNEL RECORD</p>
+            <h1>Personnel Details</h1>
+            <p class="page-description">
+                View and manage an individual personnel record.
+            </p>
+        </div>
+    </div>
+
+    <div class="alert alert-success"
+         th:if="${successMessage != null}"
+         th:text="${successMessage}"></div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage != null}"
+         th:text="${errorMessage}"></div>
+
+    <section class="panel" th:if="${personnel != null}">
+
+        <div class="details-heading">
+            <div>
+                <h2 th:text="${personnel.name}">Personnel Name</h2>
+                <p class="muted"
+                   th:text="${personnel.personnelCode}">
+                    P-001
+                </p>
+            </div>
+
+            <span class="status-badge"
+                  th:classappend="${personnel.active} ?
+                    ' status-available' : ' status-unavailable'"
+                  th:text="${personnel.active} ? 'ACTIVE' : 'INACTIVE'">
+                ACTIVE
+            </span>
+        </div>
+
+        <dl class="details-grid">
+
+            <div class="detail-item">
+                <dt>Personnel ID</dt>
+                <dd th:text="${personnel.id}">1</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Personnel Code</dt>
+                <dd th:text="${personnel.personnelCode}">P-001</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Full Name</dt>
+                <dd th:text="${personnel.name}">Personnel Name</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Role</dt>
+                <dd th:text="${personnel.role}">Officer</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Assigned Unit</dt>
+                <dd th:text="${personnel.unit}">Unit Alpha</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Posting</dt>
+                <dd th:text="${personnel.posting}">Headquarters</dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Availability</dt>
+                <dd>
+                    <span class="status-badge"
+                          th:text="${personnel.availability}">
+                        AVAILABLE
+                    </span>
+                </dd>
+            </div>
+
+            <div class="detail-item">
+                <dt>Record Status</dt>
+                <dd th:text="${personnel.active} ? 'Active' : 'Inactive'">
+                    Active
+                </dd>
+            </div>
+
+        </dl>
+
+        <div class="details-section">
+            <h3>Update Availability</h3>
+
+            <form method="post"
+                  th:action="@{/personnel/{id}/availability(id=${personnel.id})}"
+                  class="availability-form">
+
+                <select name="availability" required>
+                    <option value="AVAILABLE"
+                            th:selected="${personnel.availability == 'AVAILABLE'}">
+                        Available
+                    </option>
+                    <option value="ON_DUTY"
+                            th:selected="${personnel.availability == 'ON_DUTY'}">
+                        On Duty
+                    </option>
+                    <option value="ON_LEAVE"
+                            th:selected="${personnel.availability == 'ON_LEAVE'}">
+                        On Leave
+                    </option>
+                    <option value="UNAVAILABLE"
+                            th:selected="${personnel.availability == 'UNAVAILABLE'}">
+                        Unavailable
+                    </option>
+                </select>
+
+                <button class="button button-primary" type="submit">
+                    Update Availability
+                </button>
+            </form>
+        </div>
+
+        <div class="form-actions">
+            <a class="button button-primary"
+               th:href="@{/personnel/{id}/edit(id=${personnel.id})}">
+                Edit Personnel
+            </a>
+
+            <a class="button button-secondary"
+               th:href="@{/personnel}">
+                Back to List
+            </a>
+        </div>
+
+    </section>
+
+    <a class="back-link" th:href="@{/dashboard}">
+        ← Back to Dashboard
+    </a>
+
+</main>
+
+<footer class="footer">
+    Defense Logistics &amp; Resource Management
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readiness Report</title>
+    <link rel="stylesheet" th:href="@{/css/readiness-report.css}">
+</head>
+<body>
+<div class="readiness-page">
+    <header class="readiness-header">
+        <div>
+            <p class="eyebrow">OPERATIONAL OVERVIEW</p>
+            <h1>Operational Readiness Report</h1>
+            <p class="subtitle">Summary of personnel, equipment, and vehicle readiness based on currently available operational data.</p>
+            <a th:href="@{/dashboard}" class="action-link secondary readiness-back-link">← Back to Dashboard</a>
+        </div>
+
+        <div class="header-actions">
+            <a th:href="@{/reports/readiness}" class="action-link secondary">Refresh</a>
+        </div>
+    </header>
+
+    <section class="report-summary" th:if="${report != null}">
+        <div class="summary-header">
+            <div>
+                <h2>Overall Readiness</h2>
+                <p>Prepared at <span th:text="${report.generatedAt}">—</span></p>
+            </div>
+            <span class="badge" th:classappend="${report.personnelDataAvailable or report.equipmentDataAvailable or report.vehicleDataAvailable} ? ' available' : ' unavailable'"
+                  th:text="${report.personnelDataAvailable or report.equipmentDataAvailable or report.vehicleDataAvailable} ? 'Active Data' : 'Data unavailable'">
+                Active Data
+            </span>
+        </div>
+
+        <div class="overall-readiness" th:if="${report.personnelDataAvailable or report.equipmentDataAvailable or report.vehicleDataAvailable}">
+            <div class="readiness-score" th:text="${#numbers.formatDecimal(report.overallReadinessPercentage, 0, 1)} + '%'">0%</div>
+            <div class="readiness-label">Current overall readiness</div>
+            <p class="coverage-note" th:text="${report.message}">Data coverage is based on available category records.</p>
+        </div>
+
+        <div class="overall-readiness unavailable-panel" th:unless="${report.personnelDataAvailable or report.equipmentDataAvailable or report.vehicleDataAvailable}">
+            <div class="readiness-score">Data unavailable</div>
+            <div class="readiness-label">No usable readiness data is available</div>
+            <p class="coverage-note" th:text="${report.message}">Data is currently unavailable from the connected services.</p>
+        </div>
+    </section>
+
+    <section class="card-grid">
+        <article class="readiness-card">
+            <div class="card-head">
+                <h3>Personnel Readiness</h3>
+                <span class="badge" th:classappend="${report.personnelDataAvailable} ? ' available' : ' unavailable'"
+                      th:text="${report.personnelDataAvailable} ? 'Available' : 'Unavailable'">Available</span>
+            </div>
+
+            <ul class="stat-list">
+                <li><span>Total personnel</span><strong th:text="${report.totalPersonnel}">0</strong></li>
+                <li><span>Available personnel</span><strong th:text="${report.availablePersonnel}">0</strong></li>
+                <li><span>Unavailable personnel</span><strong th:text="${report.unavailablePersonnel}">0</strong></li>
+                <li><span>Readiness</span><strong th:if="${report.personnelDataAvailable}" th:text="${#numbers.formatDecimal(report.personnelReadinessPercentage, 0, 1)} + '%'">0%</strong>
+                    <strong class="muted" th:unless="${report.personnelDataAvailable}">Not calculated</strong>
+                </li>
+            </ul>
+        </article>
+
+        <article class="readiness-card">
+            <div class="card-head">
+                <h3>Equipment Readiness</h3>
+                <span class="badge" th:classappend="${report.equipmentDataAvailable} ? ' available' : ' unavailable'"
+                      th:text="${report.equipmentDataAvailable} ? 'Available' : 'Unavailable'">Available</span>
+            </div>
+
+            <ul class="stat-list">
+                <li><span>Total equipment</span><strong th:text="${report.totalEquipment}">0</strong></li>
+                <li><span>Serviceable</span><strong th:text="${report.serviceableEquipment}">0</strong></li>
+                <li><span>Unserviceable</span><strong th:text="${report.unserviceableEquipment}">0</strong></li>
+                <li><span>Readiness</span><strong th:if="${report.equipmentDataAvailable}" th:text="${#numbers.formatDecimal(report.equipmentReadinessPercentage, 0, 1)} + '%'">0%</strong>
+                    <strong class="muted" th:unless="${report.equipmentDataAvailable}">Not calculated</strong>
+                </li>
+            </ul>
+        </article>
+
+        <article class="readiness-card">
+            <div class="card-head">
+                <h3>Vehicle Readiness</h3>
+                <span class="badge" th:classappend="${report.vehicleDataAvailable} ? ' available' : ' unavailable'"
+                      th:text="${report.vehicleDataAvailable} ? 'Available' : 'Unavailable'">Available</span>
+            </div>
+
+            <ul class="stat-list">
+                <li><span>Total vehicles</span><strong th:text="${report.totalVehicles}">0</strong></li>
+                <li><span>Available</span><strong th:text="${report.availableVehicles}">0</strong></li>
+                <li><span>Unavailable</span><strong th:text="${report.unavailableVehicles}">0</strong></li>
+                <li><span>Readiness</span><strong th:if="${report.vehicleDataAvailable}" th:text="${#numbers.formatDecimal(report.vehicleReadinessPercentage, 0, 1)} + '%'">0%</strong>
+                    <strong class="muted" th:unless="${report.vehicleDataAvailable}">Not calculated</strong>
+                </li>
+            </ul>
+        </article>
+    </section>
+
+    <section class="data-quality-panel">
+        <div class="panel-header">
+            <h2>Data Quality and Availability</h2>
+        </div>
+
+        <div class="availability-list">
+            <div class="availability-row" th:classappend="${report.personnelDataAvailable} ? ' available' : ' unavailable'">
+                <span>Personnel</span>
+                <strong th:text="${report.personnelDataAvailable} ? 'Data available' : 'Data unavailable'">Data unavailable</strong>
+            </div>
+
+            <div class="availability-row" th:classappend="${report.equipmentDataAvailable} ? ' available' : ' unavailable'">
+                <span>Equipment</span>
+                <strong th:text="${report.equipmentDataAvailable} ? 'Data available' : 'Data unavailable'">Data unavailable</strong>
+            </div>
+
+            <div class="availability-row" th:classappend="${report.vehicleDataAvailable} ? ' available' : ' unavailable'">
+                <span>Vehicles</span>
+                <strong th:text="${report.vehicleDataAvailable} ? 'Data available' : 'Data unavailable'">Data unavailable</strong>
+            </div>
+        </div>
+
+        <p class="quality-note" th:text="${report.message}">Data is not currently available from the backend services.</p>
+    </section>
+</div>
+</body>
+</html>

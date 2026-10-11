@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/inventory.css}">
+</head>
+<body>
+
+<div class="inventory-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">LOGISTICS OPERATIONS</p>
+            <h1>Inventory &amp; Supplies</h1>
+            <p class="subtitle">
+                Monitor stock levels, supplies and storage locations.
+            </p>
+            <a class="button button-secondary dashboard-back-link"
+               th:href="@{/dashboard}">← Back to Dashboard</a>
+        </div>
+
+        <a class="button button-primary" th:href="@{/inventory/new}">
+            + Add Inventory Item
+        </a>
+    </header>
+
+    <div class="alert alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}">
+    </div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="summary-grid">
+        <article class="summary-card">
+            <span class="summary-label">Total Items</span>
+            <strong th:text="${totalItems}">0</strong>
+            <span class="summary-description">Inventory records</span>
+        </article>
+
+        <article class="summary-card warning-card">
+            <span class="summary-label">Low Stock</span>
+            <strong th:text="${lowStockCount}">0</strong>
+            <span class="summary-description">At or below minimum stock</span>
+        </article>
+
+        <article class="summary-card danger-card">
+            <span class="summary-label">Out of Stock</span>
+            <strong th:text="${outOfStockCount}">0</strong>
+            <span class="summary-description">Items with zero quantity</span>
+        </article>
+    </section>
+
+    <section class="content-card">
+
+        <div class="section-heading">
+            <div>
+                <h2>Inventory Records</h2>
+                <p>Search and filter available supplies.</p>
+            </div>
+        </div>
+
+        <form class="filter-form" th:action="@{/inventory}" method="get">
+
+            <div class="form-field search-field">
+                <label for="keyword">Search</label>
+                <input
+                        type="text"
+                        id="keyword"
+                        name="keyword"
+                        placeholder="Item code, name or location"
+                        th:value="${keyword}">
+            </div>
+
+            <div class="form-field">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All categories</option>
+                    <option
+                            th:each="categoryOption : ${categories}"
+                            th:value="${categoryOption}"
+                            th:text="${categoryOption}"
+                            th:selected="${selectedCategory == categoryOption}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="stockStatus">Stock Status</label>
+                <select id="stockStatus" name="stockStatus">
+                    <option value="">All statuses</option>
+                    <option value="IN_STOCK"
+                            th:selected="${selectedStockStatus == 'IN_STOCK'}">
+                        In Stock
+                    </option>
+                    <option value="LOW_STOCK"
+                            th:selected="${selectedStockStatus == 'LOW_STOCK'}">
+                        Low Stock
+                    </option>
+                    <option value="OUT_OF_STOCK"
+                            th:selected="${selectedStockStatus == 'OUT_OF_STOCK'}">
+                        Out of Stock
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="button button-primary">
+                    Apply Filters
+                </button>
+                <a class="button button-secondary" th:href="@{/inventory}">
+                    Reset
+                </a>
+            </div>
+        </form>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Minimum Stock</th>
+                    <th>Storage Location</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td class="code-cell" th:text="${item.itemCode}">INV-001</td>
+                    <td class="name-cell" th:text="${item.name}">Sample Item</td>
+                    <td th:text="${item.category}">General</td>
+
+                    <td>
+                        <span th:text="${item.quantity}">0</span>
+                        <span class="unit-label" th:text="${item.unit}">units</span>
+                    </td>
+
+                    <td th:text="${item.minimumStock}">0</td>
+
+                    <td th:text="${item.storageLocation}">Warehouse A</td>
+
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${item.stockStatus == 'IN_STOCK'} ? ' status-good' :
+                              (${item.stockStatus == 'LOW_STOCK'} ? ' status-warning' : ' status-danger')"
+                              th:text="${item.stockStatus == 'IN_STOCK'} ? 'In Stock' :
+                              (${item.stockStatus == 'LOW_STOCK'} ? 'Low Stock' :
+                              (${item.stockStatus == 'OUT_OF_STOCK'} ? 'Out of Stock' : 'Unknown'))">
+                            In Stock
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="table-actions">
+                            <a class="action-link"
+                               th:href="@{/inventory/{id}(id=${item.id})}">
+                                View
+                            </a>
+                            <a class="action-link"
+                               th:href="@{/inventory/{id}/edit(id=${item.id})}">
+                                Edit
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="8" class="empty-state">
+                        <strong>No inventory items found</strong>
+                        <p>Try changing the filters or add a new inventory item.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>
+                Showing <strong th:text="${#lists.size(items)}">0</strong>
+                inventory records
+            </span>
+        </div>
+
+    </section>
+
+</div>
+
+</body>
+</html>

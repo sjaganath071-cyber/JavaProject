@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Record</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #f4f6f9;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #203b33;
+        }
+
+        .field {
+            margin: 16px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #aebbb4;
+            border-radius: 4px;
+            font: inherit;
+        }
+
+        .field-error,
+        .global-errors {
+            color: #b42332;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            color: white;
+            background: #203b33;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <a href="/personnel">Back to Personnel</a>
+    <h1 th:text="${personnel.id == null ? 'Add Personnel' : 'Edit Personnel'}">Personnel Record</h1>
+
+    <form th:action="${formAction}" th:object="${personnel}" method="post">
+        <div class="global-errors" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+
+        <div class="field">
+            <label for="personnelId">Personnel ID</label>
+            <input id="personnelId" type="text" th:field="*{personnelId}"
+                   th:readonly="${personnel.id != null}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('personnelId')}"
+               th:errors="*{personnelId}"></p>
+        </div>
+
+        <div class="field">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" type="text" th:field="*{fullName}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('fullName')}"
+               th:errors="*{fullName}"></p>
+        </div>
+
+        <div class="field">
+            <label for="rank">Rank</label>
+            <input id="rank" type="text" th:field="*{rank}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('rank')}"
+               th:errors="*{rank}"></p>
+        </div>
+
+        <div class="field">
+            <label for="department">Department</label>
+            <input id="department" type="text" th:field="*{department}" required>
+            <p class="field-error" th:if="${#fields.hasErrors('department')}"
+               th:errors="*{department}"></p>
+        </div>
+
+        <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" type="tel" th:field="*{phone}">
+            <p class="field-error" th:if="${#fields.hasErrors('phone')}"
+               th:errors="*{phone}"></p>
+        </div>
+
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" th:field="*{email}">
+            <p class="field-error" th:if="${#fields.hasErrors('email')}"
+               th:errors="*{email}"></p>
+        </div>
+
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" th:field="*{status}" required>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+            <p class="field-error" th:if="${#fields.hasErrors('status')}"
+               th:errors="*{status}"></p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Save</button>
+            <a href="/personnel">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

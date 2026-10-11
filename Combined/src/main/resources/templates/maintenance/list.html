@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Management | Defense Logistics</title>
+    <link rel="stylesheet" th:href="@{/css/maintenance.css}">
+</head>
+<body>
+
+<div class="maintenance-page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">ASSET READINESS</p>
+            <h1>Maintenance Management</h1>
+            <p class="subtitle">
+                Schedule, track and review maintenance activities.
+            </p>
+            <a class="button button-secondary dashboard-back-link"
+               th:href="@{/dashboard}">← Back to Dashboard</a>
+        </div>
+
+        <a class="button button-primary" th:href="@{/maintenance/new}">
+            + Schedule Maintenance
+        </a>
+    </header>
+
+    <div class="alert alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}">
+    </div>
+
+    <div class="alert alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="summary-grid">
+
+        <article class="summary-card">
+            <span class="summary-label">Total Records</span>
+            <strong th:text="${totalRecords}">0</strong>
+            <span class="summary-description">Maintenance activities</span>
+        </article>
+
+        <article class="summary-card warning-card">
+            <span class="summary-label">Scheduled</span>
+            <strong th:text="${scheduledCount}">0</strong>
+            <span class="summary-description">Awaiting maintenance</span>
+        </article>
+
+        <article class="summary-card progress-card">
+            <span class="summary-label">In Progress</span>
+            <strong th:text="${inProgressCount}">0</strong>
+            <span class="summary-description">Currently being serviced</span>
+        </article>
+
+        <article class="summary-card success-card">
+            <span class="summary-label">Completed</span>
+            <strong th:text="${completedCount}">0</strong>
+            <span class="summary-description">Completed activities</span>
+        </article>
+
+    </section>
+
+    <section class="content-card">
+
+        <div class="section-heading">
+            <div>
+                <h2>Maintenance Records</h2>
+                <p>Find maintenance activities by resource or status.</p>
+            </div>
+        </div>
+
+        <form class="filter-form"
+              th:action="@{/maintenance}"
+              method="get">
+
+            <div class="form-field search-field">
+                <label for="keyword">Search</label>
+                <input
+                        id="keyword"
+                        type="text"
+                        name="keyword"
+                        placeholder="Reference, resource or technician"
+                        th:value="${keyword}">
+            </div>
+
+            <div class="form-field">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option value="SCHEDULED"
+                            th:selected="${selectedStatus == 'SCHEDULED'}">
+                        Scheduled
+                    </option>
+                    <option value="IN_PROGRESS"
+                            th:selected="${selectedStatus == 'IN_PROGRESS'}">
+                        In Progress
+                    </option>
+                    <option value="COMPLETED"
+                            th:selected="${selectedStatus == 'COMPLETED'}">
+                        Completed
+                    </option>
+                    <option value="CANCELLED"
+                            th:selected="${selectedStatus == 'CANCELLED'}">
+                        Cancelled
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="maintenanceType">Maintenance Type</label>
+                <select id="maintenanceType" name="maintenanceType">
+                    <option value="">All types</option>
+                    <option value="PREVENTIVE"
+                            th:selected="${selectedMaintenanceType == 'PREVENTIVE'}">
+                        Preventive
+                    </option>
+                    <option value="CORRECTIVE"
+                            th:selected="${selectedMaintenanceType == 'CORRECTIVE'}">
+                        Corrective
+                    </option>
+                    <option value="INSPECTION"
+                            th:selected="${selectedMaintenanceType == 'INSPECTION'}">
+                        Inspection
+                    </option>
+                    <option value="EMERGENCY"
+                            th:selected="${selectedMaintenanceType == 'EMERGENCY'}">
+                        Emergency
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button class="button button-primary" type="submit">
+                    Apply Filters
+                </button>
+
+                <a class="button button-secondary"
+                   th:href="@{/maintenance}">
+                    Reset
+                </a>
+            </div>
+
+        </form>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Resource</th>
+                    <th>Type</th>
+                    <th>Scheduled Date</th>
+                    <th>Technician</th>
+                    <th>Estimated Cost</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="record : ${records}">
+
+                    <td class="code-cell"
+                        th:text="${record.maintenanceCode}">
+                        MNT-001
+                    </td>
+
+                    <td>
+                        <strong th:text="${record.resourceCode}">
+                            EQ-001
+                        </strong>
+                        <span class="secondary-text"
+                              th:text="${record.resourceType}">
+                            EQUIPMENT
+                        </span>
+                    </td>
+
+                    <td th:text="${record.maintenanceType}">
+                        PREVENTIVE
+                    </td>
+
+                    <td th:text="${record.scheduledDate}">
+                        2026-10-10
+                    </td>
+
+                    <td th:text="${record.assignedTechnician != null
+                        and !record.assignedTechnician.isBlank()
+                        ? record.assignedTechnician : 'Unassigned'}">
+                        Unassigned
+                    </td>
+
+                    <td>
+                        <span th:text="${record.estimatedCost != null
+                            ? record.estimatedCost : 'N/A'}">
+                            0
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${record.status == 'COMPLETED'}
+                                  ? ' status-success'
+                                  : (${record.status == 'IN_PROGRESS'}
+                                  ? ' status-progress'
+                                  : (${record.status == 'CANCELLED'}
+                                  ? ' status-danger' : ' status-warning'))"
+                              th:text="${record.status}">
+                            SCHEDULED
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="table-actions">
+                            <a class="action-link"
+                               th:href="@{/maintenance/{id}(id=${record.id})}">
+                                View
+                            </a>
+
+                            <a class="action-link"
+                               th:href="@{/maintenance/{id}/edit(id=${record.id})}">
+                                Edit
+                            </a>
+                        </div>
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(records)}">
+                    <td colspan="8" class="empty-state">
+                        <strong>No maintenance records found</strong>
+                        <p>Change the filters or schedule a maintenance activity.</p>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            Showing
+            <strong th:text="${#lists.size(records)}">0</strong>
+            maintenance records
+        </div>
+
+    </section>
+
+</div>
+
+</body>
+</html>

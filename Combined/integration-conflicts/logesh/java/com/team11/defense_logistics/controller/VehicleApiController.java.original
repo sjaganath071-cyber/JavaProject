@@ -1,0 +1,74 @@
+
+package com.team11.defense_logistics.controller;
+
+import com.team11.defense_logistics.model.Vehicle;
+import com.team11.defense_logistics.service.VehicleService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/vehicles")
+public class VehicleApiController {
+
+    private final VehicleService vehicleService;
+
+    public VehicleApiController(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
+
+    @GetMapping
+    public List<Vehicle> getAllVehicles() {
+        return vehicleService.getAllVehicles();
+    }
+
+    @GetMapping("/{id}")
+    public Vehicle getVehicleById(@PathVariable Long id) {
+        return vehicleService.getVehicleById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Vehicle not found"));
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Vehicle createVehicle(@Valid @RequestBody Vehicle vehicle) {
+        return vehicleService.createVehicle(vehicle);
+    }
+
+    @PutMapping("/{id}")
+    public Vehicle updateVehicle(
+            @PathVariable Long id,
+            @Valid @RequestBody Vehicle updatedVehicle) {
+        return vehicleService.updateVehicle(id, updatedVehicle);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVehicle(@PathVariable Long id) {
+        vehicleService.deleteVehicle(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    public Vehicle updateStatus(
+            @PathVariable Long id,
+            @RequestBody Vehicle statusRequest) {
+        return vehicleService.updateStatus(id, statusRequest.getStatus());
+    }
+
+    @GetMapping("/availability")
+    public List<Vehicle> getAvailableVehicles() {
+        return vehicleService.getAllVehicles().stream()
+                .filter(v -> "Available".equalsIgnoreCase(v.getStatus()))
+                .toList();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidRequest(
+            IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(exception.getMessage());
+    }
+}

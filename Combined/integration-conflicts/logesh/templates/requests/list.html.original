@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Requests</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #203b33;
+        }
+
+        .back {
+            color: #203b33;
+            text-decoration: none;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1050px;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #203b33;
+            color: white;
+        }
+
+        .high, .critical {
+            color: #c82333;
+            font-weight: bold;
+        }
+
+        .medium {
+            color: #b77900;
+            font-weight: bold;
+        }
+
+        .low {
+            color: #218838;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #b77900;
+            font-weight: bold;
+        }
+
+        .approved {
+            color: #218838;
+            font-weight: bold;
+        }
+
+        .rejected {
+            color: #c82333;
+            font-weight: bold;
+        }
+
+        .fulfilled {
+            color: #1769aa;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-left: 4px solid #218838;
+            background: #edf6ef;
+        }
+
+        .error {
+            border-color: #c82333;
+            background: #fff0f1;
+        }
+
+        .row-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        button, select {
+            font: inherit;
+        }
+
+        button {
+            padding: 0;
+            border: 0;
+            color: #203b33;
+            background: none;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a class="back" href="/dashboard">← Back to Dashboard</a>
+
+    <h1>Logistics Requests</h1>
+    <p>Review resource requirements, priorities, and request status.</p>
+    <p class="message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p><a href="/requests/new">Add Request</a></p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Requester</th>
+                <th>Resource Type</th>
+                <th>Quantity</th>
+                <th>Priority</th>
+                <th>Required Date</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="request : ${requests}">
+                <td th:text="${request.id}"></td>
+                <td th:text="${request.requesterName}"></td>
+                <td th:text="${request.resourceType}"></td>
+                <td th:text="${request.quantity}"></td>
+                <td>
+                    <span th:text="${request.priority}"
+                          th:class="${#strings.toLowerCase(request.priority)}">
+                    </span>
+                </td>
+                <td th:text="${request.requiredDate}"></td>
+                <td th:text="${request.description}"></td>
+                <td>
+                    <span th:text="${request.status}"
+                          th:class="${#strings.toLowerCase(request.status)}">
+                    </span>
+                </td>
+                <td>
+                    <div class="row-actions" th:if="${request.status == 'Pending'}">
+                        <a th:href="@{/requests/edit/{id}(id=${request.id})}">Edit</a>
+                        <form th:action="@{/requests/delete/{id}(id=${request.id})}"
+                              method="post">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                    <form th:if="${request.status == 'Approved'}"
+                          th:action="@{/requests/status/{id}(id=${request.id})}"
+                          method="post">
+                        <input type="hidden" name="status" value="Fulfilled">
+                        <button type="submit">Mark fulfilled</button>
+                    </form>
+                    <span th:if="${request.status == 'Rejected' || request.status == 'Fulfilled'}">No actions</span>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(requests)}">
+                <td colspan="9">No logistics requests available.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

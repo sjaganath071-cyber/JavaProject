@@ -1,0 +1,117 @@
+package com.team11.defense_logistics.model;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDate;
+
+public class LogisticsRequest {
+
+    private Long id;
+
+    @NotBlank(message = "Requester name is required")
+    private String requesterName;
+
+    @NotBlank(message = "Resource type is required")
+    private String resourceType;
+
+    @Min(value = 1, message = "Quantity must be at least 1")
+    private int quantity;
+
+    @NotBlank(message = "Priority is required")
+    @Pattern(regexp = "^(Low|Medium|High|Critical)$",
+            message = "Priority must be Low, Medium, High, or Critical")
+    private String priority;
+
+    @NotNull(message = "Required date is required")
+    private LocalDate requiredDate;
+
+    @NotBlank(message = "Description is required")
+    private String description;
+
+    @Pattern(regexp = "^(Pending|Approved|Rejected|Fulfilled)$",
+            message = "Status must be Pending, Approved, Rejected, or Fulfilled")
+    private String status;
+
+    public LogisticsRequest() {
+    }
+
+    public LogisticsRequest(Long id, String requesterName,
+            String resourceType, int quantity, String priority,
+            LocalDate requiredDate, String description, String status) {
+        this.id = id;
+        this.requesterName = requesterName;
+        this.resourceType = resourceType;
+        this.quantity = quantity;
+        this.priority = priority;
+        this.requiredDate = requiredDate;
+        this.description = description;
+        this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getRequesterName() {
+        return requesterName;
+    }
+
+    public void setRequesterName(String requesterName) {
+        this.requesterName = requesterName;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getRequiredDate() {
+        return requiredDate;
+    }
+
+    public void setRequiredDate(LocalDate requiredDate) {
+        this.requiredDate = requiredDate;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+}
