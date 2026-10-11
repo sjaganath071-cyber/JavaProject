@@ -118,7 +118,7 @@ public class LogisticsRequestService {
             throw new IllegalArgumentException("Created to must not be earlier than created from");
         }
 
-        Specification<LogisticsRequest> spec = Specification.where((Specification<LogisticsRequest>) null);
+        Specification<LogisticsRequest> spec = (root, query, cb) -> cb.conjunction();
 
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
